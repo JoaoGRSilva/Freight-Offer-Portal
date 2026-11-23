@@ -54,11 +54,19 @@ def protect_routes():
     if endpoint == 'auth.logout':
         return
     if current_user.role == 'carrier':
-        # Transportadora só vê a home e as telas do próprio portal.
+
+        # Home pública do portal da transportadora.
         if endpoint == 'home.home' and request.method in ('GET', 'HEAD'):
             return
+
+        # Envio de propostas pela transportadora autenticada.
+        if endpoint == 'home.enviar_proposta' and request.method == 'POST':
+            return
+
+        # Telas exclusivas da transportadora.
         if request.blueprint == 'carrier':
             return
+
         abort(403)
     if current_user.role != 'internal' or request.blueprint == 'carrier':
         abort(403)
@@ -69,11 +77,6 @@ def protect_routes():
     if 'frete_id' in (request.view_args or {}):
         require_freight_access(request.view_args['frete_id'])
 
-
-print("\n===== ROTAS REGISTRADAS =====")
-for rule in app.url_map.iter_rules():
-    print(f"{rule.endpoint:40} {rule}")
-print("=============================\n")
 
 if __name__ == "__main__":
     app.run(debug=True)

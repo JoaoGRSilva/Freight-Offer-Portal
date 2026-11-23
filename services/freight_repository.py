@@ -1000,3 +1000,34 @@ def delete_base():
             print(f"{tabela}: {resultado[0]}")
 
     return True
+
+
+def list_propose_send(carrier):
+
+    with connect("fretes") as conn:
+
+        freight = conn.execute(
+            """
+            SELECT
+                fretes.id,
+                fretes.numero_frete,
+                fretes.origem,
+                fretes.destino,
+                fretes.peso_kg,
+                fretes.valor,
+                fretes.status,
+                fretes_propostas.valor,
+                fretes_propostas.prazo_dias,
+                fretes_propostas.observacoes,
+                fretes_propostas.aceita,
+                fretes_propostas.criado_em
+            FROM fretes
+            INNER JOIN fretes_propostas
+                ON fretes.id = fretes_propostas.frete_id
+            WHERE fretes_propostas.transportadora=?
+            """,
+            (carrier,)
+        ).fetchall()
+
+        return [dict(r) for r in freight]
+        

@@ -38,7 +38,6 @@ from services.freight_repository import (
     listar_fretes,
     atualizar_status,
     obter_frete,
-    listar_propostas,
     obter_fechamento,
     registrar_proposta,
     aceitar_proposta,

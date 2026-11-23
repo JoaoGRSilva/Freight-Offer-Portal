@@ -1,18 +1,18 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <!-- CSRF: token da sessão + script que o envia em fetch e formulários -->
+    <!-- CSRF -->
     <meta name="csrf-token" content="{{ auth_csrf_token() }}">
     <script src="{{ url_for('static', filename='js/csrf.js') }}"></script>
 
     <title>
         {% block title %}
-        Portal de Oferta de Cargas
+            Portal de Oferta de Fretes
         {% endblock %}
     </title>
 
@@ -21,127 +21,129 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- Global styles -->
+    <!-- GLOBAL STYLES -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/base/variables.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/base/global.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/base/components.css') }}">
 
-    <!-- Page-specific styles -->
+    <!-- PAGE-SPECIFIC STYLES -->
     {% block styles %}{% endblock %}
-
-
 </head>
 
 <body>
-    
+
     <!-- GLOBAL HEADER -->
     <header class="topbar">
 
         <div class="logo">
-            Portal de Oferta de Cargas
+            Digital Freight Offering Portal
         </div>
 
-        <!-- Internal navigation only -->
-        {% if current_user.is_authenticated
-            and current_user.role == "internal" %}
+        <!-- NAVIGATION -->
+        {% if current_user.is_authenticated %}
 
-        <nav class="nav">
+            <nav class="nav">
 
-            {% if current_user.is_authenticated and current_user.role == "internal" %}
+                {% if current_user.is_authenticated %}
+                    <nav class="nav">
 
-                <a href="/nova-carga"
-                class="{% if request.path == '/nova-carga' %}active{% endif %}">
-                    Nova Carga
-                </a>
+                        {% if current_user.role == "internal" %}
+                            <a href="/nova-carga"
+                            class="{% if request.path == '/nova-carga' %}active{% endif %}">
+                                Nova Carga
+                            </a>
 
-                <a href="/fretes"
-                class="{% if request.path == '/fretes' or request.path.startswith('/fretes/') %}active{% endif %}">
-                    Mesa de Fretes
-                </a>
+                            <a href="/fretes"
+                            class="{% if request.path == '/fretes' %}active{% endif %}">
+                                Mesa de Fretes
+                            </a>
 
-                {% if current_user.is_admin %}
-                    <a href="/dashboard"
-                    class="{% if request.path == '/dashboard' %}active{% endif %}">
-                        Dashboard
-                    </a>
+                            {% if current_user.is_admin %}
+                                <a href="/dashboard"
+                                class="{% if request.path == '/dashboard' %}active{% endif %}">
+                                    Dashboard
+                                </a>
+                                <a href="{{ url_for('admin.index') }}"
+                                class="{% if request.path.startswith('/admin') %}active{% endif %}">
+                                    Administração
+                                </a>
+                            {% endif %}
 
-                    <a href="{{ url_for('admin.index') }}"
-                    class="{% if request.path.startswith('/admin') %}active{% endif %}">
-                        Administração
-                    </a>
+                        {% elif current_user.role == "carrier" %}
+                            <a href="{{ url_for('carrier.meus_fretes') }}"
+                            class="{% if request.path == '/meus-fretes' %}active{% endif %}">
+                                Meus Fretes
+                            </a>
+                        {% endif %}
+
+                        <a href="/"
+                        class="{% if request.path == '/' %}active{% endif %}">
+                            Oferta de Fretes
+                        </a>
+
+                    </nav>
                 {% endif %}
 
-                <a href="/"
-                class="{% if request.path == '/' %}active{% endif %}">
-                    Oferta de Fretes
-                </a>
-
-            {% elif current_user.is_authenticated and current_user.role == "carrier" %}
-
-                <a href="{{ url_for('carrier.meus_fretes') }}"
-                class="{% if request.path == '/meus-fretes' %}active{% endif %}">
-                    Meus Fretes
-                </a>
-
-            {% endif %}
-
-        </nav>
+            </nav>
 
         {% endif %}
 
-        <!-- Authenticated user -->
+
+        <!-- AUTHENTICATED USER -->
         {% if current_user.is_authenticated %}
 
-        <div class="header-user">
+            <div class="header-user">
 
-            <div class="header-user-info">
+                <div class="header-user-info">
 
-                {% if current_user.role == "carrier" %}
+                    {% if current_user.role == "carrier" %}
 
-                    <strong>
-                        {{ current_user.carrier_name }}
-                    </strong>
+                        <strong>
+                            {{ current_user.carrier_name }}
+                        </strong>
 
-                    <small>
-                        Portal da Transportadora
-                    </small>
+                        <small>
+                            Portal da Transportadora
+                        </small>
 
-                {% else %}
+                    {% else %}
 
-                    <strong>
-                        {{ current_user.name }}
-                    </strong>
+                        <strong>
+                            {{ current_user.name }}
+                        </strong>
 
-                    <small>
-                        {% if current_user.is_admin %}Administrador LATAM{% else %}Operador · {{ current_user.plants | join(", ") or "Sem planta" }}{% endif %}
-                    </small>
+                        <small>
+                            {% if current_user.is_admin %}
+                                Administrador LATAM
+                            {% else %}
+                                Operador · {{ current_user.plants | join(", ") or "Sem planta" }}
+                            {% endif %}
+                        </small>
 
-                {% endif %}
+                    {% endif %}
+
+                </div>
+
+                <form method="POST" action="{{ url_for('auth.logout') }}">
+
+                    <input type="hidden"
+                           name="csrf_token"
+                           value="{{ auth_csrf_token() }}">
+
+                    <button type="submit" class="logout-btn">
+                        Sair
+                    </button>
+
+                </form>
 
             </div>
-
-            <form method="POST"
-                action="{{ url_for('auth.logout') }}">
-
-                <input type="hidden"
-                    name="csrf_token"
-                    value="{{ auth_csrf_token() }}">
-
-                <button type="submit"
-                        class="logout-btn">
-                    Sair
-                </button>
-
-            </form>
-
-        </div>
 
         {% endif %}
 
     </header>
 
 
-    <!-- CONTEÚDO DA PÁGINA -->
+    <!-- PAGE CONTENT -->
     <main class="page">
 
         {% block content %}
@@ -149,7 +151,8 @@
 
     </main>
 
-    <!-- JAVASCRIPT ESPECÍFICO -->
+
+    <!-- PAGE JAVASCRIPT -->
     {% block scripts %}
     {% endblock %}
 

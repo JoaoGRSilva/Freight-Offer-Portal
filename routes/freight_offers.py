@@ -79,20 +79,37 @@ def home():
 
 
 
+from flask_login import current_user, login_required
+
 @home_bp.route("/api/ofertas/<int:frete_id>/propostas", methods=["POST"])
+@login_required
 def enviar_proposta(frete_id):
+
+    # Somente transportadoras autenticadas podem enviar propostas.
+    if current_user.role != "carrier":
+        return jsonify({
+            "ok": False,
+            "erro": "Apenas transportadoras podem enviar propostas."
+        }), 403
 
     dados = request.get_json(silent=True)
 
     if not isinstance(dados, dict):
         return jsonify({
             "ok": False,
-            "erro": "Dados da proposta inválidos.",
+            "erro": "Dados da proposta inválidos."
         }), 400
 
+    # Identificação obtida da sessão, nunca do JavaScript.
     transportadora = str(
-        dados.get("transportadora") or ""
+        current_user.carrier_name or ""
     ).strip()
+
+    if not transportadora:
+        return jsonify({
+            "ok": False,
+            "erro": "Transportadora não identificada na conta."
+        }), 400
 
     try:
         valor = float(dados.get("valor"))
@@ -103,19 +120,19 @@ def enviar_proposta(frete_id):
     except (TypeError, ValueError, OverflowError):
         return jsonify({
             "ok": False,
-            "erro": "Informe um valor proposto maior que zero.",
+            "erro": "Informe um valor proposto maior que zero."
         }), 400
 
     try:
         prazo_dias = int(dados.get("prazo_dias"))
 
-        if not 0 <= prazo_dias <= 365:
+        if not 1 <= prazo_dias <= 365:
             raise ValueError()
 
     except (TypeError, ValueError, OverflowError):
         return jsonify({
             "ok": False,
-            "erro": "Informe um prazo válido em dias.",
+            "erro": "Informe um prazo válido entre 1 e 365 dias."
         }), 400
 
     observacoes = str(
@@ -125,7 +142,7 @@ def enviar_proposta(frete_id):
     if len(observacoes) > 2000:
         return jsonify({
             "ok": False,
-            "erro": "Observações excedem 2000 caracteres.",
+            "erro": "Observações excedem 2000 caracteres."
         }), 400
 
     try:
@@ -140,11 +157,23 @@ def enviar_proposta(frete_id):
     except ValueError as erro:
         return jsonify({
             "ok": False,
-            "erro": str(erro),
+            "erro": str(erro)
         }), 400
+
+    except Exception:
+        log.exception(
+            "Erro ao registrar proposta do frete %s pela transportadora %s",
+            frete_id,
+            transportadora
+        )
+
+        return jsonify({
+            "ok": False,
+            "erro": "Erro interno ao registrar a proposta."
+        }), 500
 
     return jsonify({
         "ok": True,
         "mensagem": "Proposta enviada com sucesso!",
-        "proposta_id": proposta_id,
+        "proposta_id": proposta_id
     }), 201

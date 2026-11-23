@@ -674,7 +674,6 @@ Oferta de Fretes | Digital Freight Offering Portal
         <form id="form-proposta">
 
             <input type="hidden" id="proposta-frete-id">
-            <input type="hidden" id="proposta-transportadora">
 
             <label for="proposta-valor">Valor da proposta (R$)</label>
             <input type="number" id="proposta-valor"
@@ -745,23 +744,10 @@ function alternarDetalhes(id, botao) {
 
 function abrirModalProposta(freteId, numeroFrete) {
     const modal = document.getElementById("modal-proposta");
-    const seletor = document.getElementById("transportadora-teste");
 
     if (!modal) {
         console.error("Modal de proposta não encontrado no HTML.");
         alert("Erro: modal de proposta não encontrado.");
-        return;
-    }
-
-    if (!seletor) {
-        console.error("Seletor de transportadoras não encontrado.");
-        alert("Erro: seletor de transportadoras não encontrado.");
-        return;
-    }
-
-    if (!seletor.value) {
-        alert("Selecione uma transportadora antes de manifestar interesse.");
-        seletor.focus();
         return;
     }
 
@@ -770,11 +756,9 @@ function abrirModalProposta(freteId, numeroFrete) {
     formulario.reset();
 
     document.getElementById("proposta-frete-id").value = freteId;
+
     document.getElementById("proposta-frete-label").textContent =
         `Frete ${numeroFrete}`;
-
-    document.getElementById("proposta-transportadora").value =
-        seletor.value;
 
     document.getElementById("proposta-mensagem").textContent = "";
     document.getElementById("proposta-prazo").value = "1";
@@ -783,7 +767,6 @@ function abrirModalProposta(freteId, numeroFrete) {
 
     document.getElementById("proposta-valor").focus();
 }
-
 
 /* =========================================
    CLIQUE NO BOTÃO MANIFESTAR INTERESSE
@@ -836,10 +819,6 @@ document.getElementById("form-proposta")?.addEventListener(
         );
 
         const dados = {
-            transportadora: document.getElementById(
-                "proposta-transportadora"
-            ).value,
-
             valor: document.getElementById(
                 "proposta-valor"
             ).value,
@@ -872,7 +851,20 @@ document.getElementById("form-proposta")?.addEventListener(
                 }
             );
 
-            const resultado = await resposta.json();
+            const texto = await resposta.text();
+
+            console.log("STATUS:", resposta.status);
+            console.log("RESPOSTA DO SERVIDOR:", texto);
+
+            let resultado;
+
+            try {
+                resultado = JSON.parse(texto);
+            } catch {
+                throw new Error(
+                    `Servidor retornou HTML em vez de JSON. HTTP ${resposta.status}. Confira o console.`
+                );
+            }
 
             if (!resposta.ok || !resultado.ok) {
                 throw new Error(
