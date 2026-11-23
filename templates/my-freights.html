@@ -1,3 +1,4 @@
+
 {% extends "base.html" %}
 
 {% block title %}
@@ -13,9 +14,184 @@ Meus Fretes | Digital Freight Offering Portal
 
 {% block content %}
 
+<!-- CABEÇALHO -->
+
 <section class="page-header">
     <h1>Bem-vindo, {{ current_user.carrier_name }}</h1>
-    <p>Suas ofertas e negociações aparecerão aqui.</p>
+    <p>Acompanhe suas propostas e negociações.</p>
+</section>
+
+
+<!-- LISTA DE FRETES -->
+
+<section class="ofertas">
+
+    <div class="ofertas-contador">
+        {{ fretes | length }} proposta(s) enviada(s)
+    </div>
+
+
+    <div class="ofertas-lista">
+
+        {% if fretes %}
+
+            {% for frete in fretes %}
+
+                <article class="oferta-card">
+
+                    <!-- TOPO DO CARD -->
+
+                    <div class="oferta-topo">
+
+                        <div class="oferta-identificacao">
+
+                            <div class="oferta-codigo">
+                                FRETE {{ frete.numero_frete }}
+                            </div>
+
+                            <h3 class="oferta-rota">
+                                <span>{{ frete.origem }}</span>
+                                <span class="oferta-seta">→</span>
+                                <span>{{ frete.destino }}</span>
+                            </h3>
+
+                        </div>
+
+
+                        <!-- STATUS -->
+
+                        <div class="oferta-status
+                            {% if frete.status == 'negociacao' %}
+                                status-negociacao
+                            {% elif frete.status == 'cotacao_aceita' %}
+                                status-aceita
+                            {% elif frete.status == 'concluido' %}
+                                status-concluido
+                            {% elif frete.status == 'cancelado' %}
+                                status-cancelado
+                            {% else %}
+                                status-pendente
+                            {% endif %}
+                        ">
+
+                            {% if frete.status == 'negociacao' %}
+                                Em negociação
+
+                            {% elif frete.status == 'cotacao_aceita' %}
+                                Cotação aceita
+
+                            {% elif frete.status == 'concluido' %}
+                                Concluído
+
+                            {% elif frete.status == 'cancelado' %}
+                                Cancelado
+
+                            {% elif frete.status == 'em_oferta' %}
+                                Aguardando retorno
+
+                            {% else %}
+                                {{ frete.status }}
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- INFORMAÇÕES DO FRETE -->
+
+                    <div class="oferta-informacoes">
+
+                        <div class="oferta-info-item">
+                            <span class="info-label">Peso</span>
+                            <strong>
+                                {{ "{:,.0f}".format(frete.peso_kg).replace(",", ".") }} kg
+                            </strong>
+                        </div>
+
+                        <div class="oferta-info-item">
+                            <span class="info-label">Valor original</span>
+                            <strong>
+                                R$ {{ "{:,.2f}".format(frete.valor_frete).replace(",", "X").replace(".", ",").replace("X", ".") }}
+                            </strong>
+                        </div>
+
+                        <div class="oferta-info-item">
+                            <span class="info-label">Prazo proposto</span>
+                            <strong>
+                                {{ frete.prazo_dias }} dia(s)
+                            </strong>
+                        </div>
+
+                    </div>
+
+
+                    <!-- PROPOSTA -->
+
+                    <div class="oferta-proposta">
+
+                        <div>
+                            <span class="info-label">Sua proposta</span>
+
+                            <strong class="oferta-valor">
+                                R$ {{ "{:,.2f}".format(frete.valor_proposta).replace(",", "X").replace(".", ",").replace("X", ".") }}
+                            </strong>
+                        </div>
+
+                        <div class="oferta-data">
+                            <span class="info-label">Enviada em</span>
+                            <strong>{{ frete.criado_em }}</strong>
+                        </div>
+
+                    </div>
+
+
+                    <!-- OBSERVAÇÕES -->
+
+                    {% if frete.observacoes %}
+
+                        <div class="oferta-observacoes">
+                            <span class="info-label">Observações</span>
+                            <p>{{ frete.observacoes }}</p>
+                        </div>
+
+                    {% endif %}
+
+
+                    <!-- RODAPÉ -->
+
+                    <div class="oferta-rodape">
+
+                        {% if frete.aceita %}
+                            <span class="proposta-resultado">
+                                Sua proposta foi aceita!
+                            </span>
+                        {% else %}
+                            <span class="proposta-resultado">
+                                Aguardando avaliação do operador
+                            </span>
+                        {% endif %}
+
+                    </div>
+
+                </article>
+
+            {% endfor %}
+
+        {% else %}
+
+            <div class="ofertas-vazio">
+                <h3>Você ainda não possui propostas</h3>
+                <p>
+                    Quando você demonstrar interesse em um frete
+                    e enviar uma proposta, ela aparecerá aqui.
+                </p>
+            </div>
+
+        {% endif %}
+
+    </div>
+
 </section>
 
 {% endblock %}

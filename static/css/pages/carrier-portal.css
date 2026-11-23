@@ -834,3 +834,251 @@
         gap: 14px;
     }
 }
+
+
+
+/* =========================================
+   MEUS FRETES - PORTAL TRANSPORTADORA
+========================================= */
+
+.ofertas {
+    margin-top: 32px;
+}
+
+.ofertas-cabecalho {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.ofertas-cabecalho h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.ofertas-cabecalho p {
+    margin: 6px 0 0;
+    color: #777;
+    font-size: 14px;
+}
+
+.ofertas-contador {
+    display: inline-block;
+    margin-bottom: 18px;
+    color: #666;
+    font-size: 13px;
+}
+
+.ofertas-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+/* CARD */
+
+.oferta-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 22px;
+    transition: box-shadow 0.2s ease;
+}
+
+.oferta-card:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+/* TOPO */
+
+.oferta-topo {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid #eee;
+}
+
+.oferta-codigo {
+    color: #777;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    letter-spacing: 0.4px;
+}
+
+.oferta-rota {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 0;
+    font-size: 17px;
+    font-weight: 600;
+}
+
+.oferta-seta {
+    color: #2f7d6d;
+}
+
+/* STATUS */
+
+.oferta-status {
+    padding: 7px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.status-pendente {
+    background: #f3f4f6;
+    color: #555;
+}
+
+.status-negociacao {
+    background: #fff4df;
+    color: #986400;
+}
+
+.status-aceita {
+    background: #e5f4eb;
+    color: #247344;
+}
+
+.status-concluido {
+    background: #e8f0ff;
+    color: #315c9b;
+}
+
+.status-cancelado {
+    background: #fdeaea;
+    color: #a33a3a;
+}
+
+/* INFORMAÇÕES */
+
+.oferta-informacoes {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    padding: 20px 0;
+}
+
+.oferta-info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.info-label {
+    color: #888;
+    font-size: 12px;
+}
+
+.oferta-info-item strong {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+/* PROPOSTA */
+
+.oferta-proposta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    background: #f7faf9;
+    border-radius: 9px;
+    padding: 16px;
+}
+
+.oferta-proposta > div {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.oferta-valor {
+    color: #2f7d6d;
+    font-size: 21px;
+    font-weight: 700;
+}
+
+.oferta-data strong {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* OBSERVAÇÕES */
+
+.oferta-observacoes {
+    margin-top: 16px;
+}
+
+.oferta-observacoes p {
+    margin: 7px 0 0;
+    color: #555;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+/* RODAPÉ */
+
+.oferta-rodape {
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid #eee;
+}
+
+.proposta-resultado {
+    color: #777;
+    font-size: 12px;
+}
+
+/* ESTADO VAZIO */
+
+.ofertas-vazio {
+    padding: 50px 20px;
+    text-align: center;
+    background: #fff;
+    border: 1px dashed #d5d5d5;
+    border-radius: 12px;
+}
+
+.ofertas-vazio h3 {
+    margin: 0 0 8px;
+    font-size: 17px;
+}
+
+.ofertas-vazio p {
+    margin: 0;
+    color: #888;
+    font-size: 14px;
+}
+
+/* RESPONSIVIDADE */
+
+@media (max-width: 650px) {
+
+    .oferta-topo {
+        flex-direction: column;
+    }
+
+    .oferta-informacoes {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .oferta-proposta {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .oferta-rota {
+        font-size: 15px;
+    }
+
+}

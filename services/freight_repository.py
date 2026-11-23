@@ -62,6 +62,77 @@ def inicializar_banco():
             )
         """)
 
+                # ==========================================
+        # MIGRAÇÃO — NEGOCIAÇÃO DE PROPOSTAS
+        # ==========================================
+
+        # Verifica quais colunas já existem
+        colunas_propostas = {
+            row["name"]
+            for row in conn.execute(
+                "PRAGMA table_info(fretes_propostas)"
+            ).fetchall()
+        }
+
+        # Status individual da negociação
+        if "status_negociacao" not in colunas_propostas:
+            conn.execute("""
+                ALTER TABLE fretes_propostas
+                ADD COLUMN status_negociacao TEXT
+                NOT NULL DEFAULT 'aguardando_operador'
+            """)
+
+        # Data da última atualização
+        if "atualizado_em" not in colunas_propostas:
+            conn.execute("""
+                ALTER TABLE fretes_propostas
+                ADD COLUMN atualizado_em TEXT
+            """)
+
+            conn.execute("""
+                UPDATE fretes_propostas
+                SET atualizado_em = criado_em
+                WHERE atualizado_em IS NULL
+            """)
+
+        # Propostas já aceitas precisam continuar aceitas
+        conn.execute("""
+            UPDATE fretes_propostas
+            SET status_negociacao = 'aceita'
+            WHERE aceita = 1
+        """)
+
+        # ==========================================
+        # HISTÓRICO DA NEGOCIAÇÃO
+        # ==========================================
+
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS fretes_negociacao_historico (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+                proposta_id INTEGER NOT NULL,
+
+                autor TEXT NOT NULL,
+                tipo TEXT NOT NULL,
+
+                valor REAL,
+                prazo_dias INTEGER,
+                observacoes TEXT,
+
+                criado_em TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+                FOREIGN KEY (proposta_id)
+                    REFERENCES fretes_propostas(id)
+            )
+        """)
+
+        # Índice para consultar rapidamente o histórico
+        conn.execute("""
+            CREATE INDEX IF NOT EXISTS
+            idx_negociacao_historico_proposta
+            ON fretes_negociacao_historico(proposta_id, criado_em)
+        """)
+
         conn.execute("""
             CREATE TABLE IF NOT EXISTS fretes_fechamentos (
                 frete_id INTEGER PRIMARY KEY,
@@ -1001,7 +1072,6 @@ def delete_base():
 
     return True
 
-
 def list_propose_send(carrier):
 
     with connect("fretes") as conn:
@@ -1014,20 +1084,24 @@ def list_propose_send(carrier):
                 fretes.origem,
                 fretes.destino,
                 fretes.peso_kg,
-                fretes.valor,
+                fretes.valor AS valor_frete,
                 fretes.status,
-                fretes_propostas.valor,
+                fretes_propostas.valor AS valor_proposta,
                 fretes_propostas.prazo_dias,
                 fretes_propostas.observacoes,
                 fretes_propostas.aceita,
                 fretes_propostas.criado_em
+
             FROM fretes
+
             INNER JOIN fretes_propostas
                 ON fretes.id = fretes_propostas.frete_id
-            WHERE fretes_propostas.transportadora=?
+
+            WHERE fretes_propostas.transportadora = ?
+
+            ORDER BY fretes_propostas.criado_em DESC
             """,
             (carrier,)
         ).fetchall()
 
         return [dict(r) for r in freight]
-        
