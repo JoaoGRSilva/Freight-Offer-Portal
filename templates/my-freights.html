@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}
+Meus Fretes | Digital Freight Offering Portal
+{% endblock %}
+
+{% block styles %}
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/pages/carrier-portal.css') }}"
+>
+{% endblock %}
+
+{% block content %}
+
+<section class="page-header">
+    <h1>Bem-vindo, {{ current_user.carrier_name }}</h1>
+    <p>Suas ofertas e negociações aparecerão aqui.</p>
+</section>
+
+{% endblock %}

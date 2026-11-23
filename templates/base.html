@@ -47,28 +47,43 @@
 
         <nav class="nav">
 
-            <a href="/nova-carga"
-            class="{% if request.path == '/nova-carga' %}active{% endif %}">
-                Nova Carga
-            </a>
+            {% if current_user.is_authenticated and current_user.role == "internal" %}
 
-            <a href="/fretes"
-            class="{% if request.path == '/fretes' or request.path.startswith('/fretes/') %}active{% endif %}">
-                Mesa de Fretes
-            </a>
+                <a href="/nova-carga"
+                class="{% if request.path == '/nova-carga' %}active{% endif %}">
+                    Nova Carga
+                </a>
 
-            {% if current_user.is_admin %}
-            <a href="/dashboard"
-            class="{% if request.path == '/dashboard' %}active{% endif %}">
-                Dashboard
-            </a>
-            <a href="{{ url_for('admin.index') }}">Administração</a>
+                <a href="/fretes"
+                class="{% if request.path == '/fretes' or request.path.startswith('/fretes/') %}active{% endif %}">
+                    Mesa de Fretes
+                </a>
+
+                {% if current_user.is_admin %}
+                    <a href="/dashboard"
+                    class="{% if request.path == '/dashboard' %}active{% endif %}">
+                        Dashboard
+                    </a>
+
+                    <a href="{{ url_for('admin.index') }}"
+                    class="{% if request.path.startswith('/admin') %}active{% endif %}">
+                        Administração
+                    </a>
+                {% endif %}
+
+                <a href="/"
+                class="{% if request.path == '/' %}active{% endif %}">
+                    Oferta de Fretes
+                </a>
+
+            {% elif current_user.is_authenticated and current_user.role == "carrier" %}
+
+                <a href="{{ url_for('carrier.meus_fretes') }}"
+                class="{% if request.path == '/meus-fretes' %}active{% endif %}">
+                    Meus Fretes
+                </a>
+
             {% endif %}
-
-            <a href="/"
-            class="{% if request.path == '/' %}active{% endif %}">
-                Oferta de Fretes
-            </a>
 
         </nav>
 

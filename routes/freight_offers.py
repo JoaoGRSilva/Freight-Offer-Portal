@@ -23,50 +23,6 @@ from services.weather import weather
 
 home_bp = Blueprint("home", __name__)
 
-
-def listar_transportadoras_teste():
-    """Busca transportadoras conhecidas no banco para simular o login."""
-
-    with connect(fretes) as conn:
-        registros = conn.execute("""
-            SELECT transportadora AS nome
-            FROM fretes_propostas
-            WHERE transportadora IS NOT NULL
-
-            UNION
-
-            SELECT transportadora_recomendada AS nome
-            FROM fretes
-            WHERE transportadora_recomendada IS NOT NULL
-
-            UNION
-
-            SELECT transportadora_escolhida AS nome
-            FROM fretes
-            WHERE transportadora_escolhida IS NOT NULL
-
-            ORDER BY nome
-        """).fetchall()
-
-    transportadoras = [
-        registro["nome"].strip()
-        for registro in registros
-        if registro["nome"] and registro["nome"].strip()
-    ]
-
-    if not transportadoras:
-        transportadoras = [
-            "Transportadora Teste A",
-            "Transportadora Teste B",
-            "Transportadora Teste C",
-        ]
-
-    return transportadoras
-
-
-
-
-
 @home_bp.route("/")
 def home():
     shipments = listar_fretes_em_oferta(None if current_user.role == "carrier" or current_user.is_admin else current_user.plants)
@@ -125,12 +81,6 @@ def home():
 
 @home_bp.route("/api/ofertas/<int:frete_id>/propostas", methods=["POST"])
 def enviar_proposta(frete_id):
-    # Até existir autenticação, não permitir propostas em produção.
-    if not current_app.debug:
-        return jsonify({
-            "ok": False,
-            "erro": "É necessário autenticar a transportadora.",
-        }), 403
 
     dados = request.get_json(silent=True)
 
@@ -143,12 +93,6 @@ def enviar_proposta(frete_id):
     transportadora = str(
         dados.get("transportadora") or ""
     ).strip()
-
-    if transportadora not in listar_transportadoras_teste():
-        return jsonify({
-            "ok": False,
-            "erro": "Selecione uma transportadora válida.",
-        }), 400
 
     try:
         valor = float(dados.get("valor"))

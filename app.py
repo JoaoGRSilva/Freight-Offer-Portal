@@ -7,6 +7,7 @@ from routes.freight_offers import home_bp
 from routes.dashboard import dashboard_bp
 from routes.freight_board import fretes_bp
 from routes.new_shipment import nova_carga_bp
+from routes.my_freights import carrier_bp
 from routes.auth import auth_bp, csrf_token, csrf_is_valid
 from routes.admin import admin_bp
 from services.freight_repository import inicializar_banco
@@ -28,7 +29,7 @@ login_manager.login_view = 'auth.login'
 @login_manager.user_loader
 def load_user(user_id):
     return get_user(user_id)
-for bp in (auth_bp, home_bp, dashboard_bp, fretes_bp, nova_carga_bp, admin_bp):
+for bp in (auth_bp, home_bp, dashboard_bp, fretes_bp, nova_carga_bp, admin_bp, carrier_bp):
     app.register_blueprint(bp)
 @app.context_processor
 def inject_auth_context():
@@ -53,10 +54,11 @@ def protect_routes():
     if endpoint == 'auth.logout':
         return
     if current_user.role == 'carrier':
-        if endpoint == 'home.home' and request.method in ('GET','HEAD'):
+        # Transportadora só vê a home e as telas do próprio portal.
+        if endpoint == 'home.home' and request.method in ('GET', 'HEAD'):
             return
         if request.blueprint == 'carrier':
-            return redirect('/')
+            return
         abort(403)
     if current_user.role != 'internal' or request.blueprint == 'carrier':
         abort(403)
@@ -66,5 +68,12 @@ def protect_routes():
         abort(403) # legacy simulation disabled until authenticated carrier workflow
     if 'frete_id' in (request.view_args or {}):
         require_freight_access(request.view_args['frete_id'])
+
+
+print("\n===== ROTAS REGISTRADAS =====")
+for rule in app.url_map.iter_rules():
+    print(f"{rule.endpoint:40} {rule}")
+print("=============================\n")
+
 if __name__ == "__main__":
     app.run(debug=True)

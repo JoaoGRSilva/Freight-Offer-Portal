@@ -1311,3 +1311,335 @@ font-size: 13px;
     font-weight: 600;
     color: #263b35;
 }
+
+/* =========================================================
+   Extraído do <style> inline de nova-carga.html
+   Cole no FINAL de static/css/pages/new-shipment.css
+   (no final para manter a mesma precedência que tinha antes)
+========================================================= */
+
+
+/* ---------- Card resumo do frete ---------- */
+
+.frete-resumo-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 14px;
+    box-shadow: 0 2px 7px rgba(15, 23, 42, .035);
+}
+
+.frete-resumo-topo,
+.frete-resumo-rodape {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: center;
+}
+
+.frete-resumo-topo h3 {
+    margin: 6px 0;
+    font-size: 18px;
+    color: #152c32;
+}
+
+.frete-resumo-status {
+    background: #eef6f3;
+    color: #267764;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.frete-resumo-dados {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    margin: 18px 0;
+}
+
+.frete-resumo-dados span {
+    background: #f6f8f8;
+    border-radius: 9px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.frete-resumo-dados small {
+    font-size: 10px;
+    color: #6b7280;
+    letter-spacing: .03em;
+}
+
+.frete-resumo-dados strong {
+    font-size: 14px;
+    color: #152c32;
+}
+
+.frete-resumo-rodape {
+    border-top: 1px solid #edf0f0;
+    padding-top: 13px;
+    font-size: 13px;
+}
+
+
+/* ---------- Modal de frete ---------- */
+
+.frete-modal-overlay[hidden],
+.frete-modal-acoes [hidden] {
+    display: none !important;
+}
+
+.frete-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(18, 32, 39, .65);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.frete-modal-dialog {
+    background: white;
+    width: min(100%, 960px);
+    max-height: 92vh;
+    overflow: auto;
+    border-radius: 16px;
+    box-shadow: 0 22px 60px rgba(0, 0, 0, .23);
+    padding: 24px;
+}
+
+.frete-modal-barra {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 12px;
+    margin-bottom: 16px;
+}
+
+.frete-modal-barra h2 {
+    font-size: 18px;
+    margin: 0;
+}
+
+.frete-modal-fechar {
+    border: 0;
+    background: #f1f5f9;
+    border-radius: 8px;
+    font-size: 24px;
+    cursor: pointer;
+    width: 38px;
+    height: 38px;
+}
+
+.frete-modal-edicao {
+    border-top: 1px solid #e5e7eb;
+    padding-top: 20px;
+    margin-top: 16px;
+}
+
+.frete-modal-edicao h3 {
+    font-size: 15px;
+    margin-bottom: 14px;
+}
+
+.frete-modal-campos {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.frete-modal-campos label {
+    font-size: 12px;
+    font-weight: 600;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.frete-modal-campos input,
+.frete-modal-campos select {
+    padding: 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font: inherit;
+}
+
+.frete-modal-acoes {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+}
+
+.frete-modal-ajuda {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 12px;
+}
+
+.frete-modal-campos-adicionais {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    margin-top: 16px;
+}
+
+.frete-modal-campos-adicionais label {
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.frete-modal-campos-adicionais input,
+.frete-modal-campos-adicionais textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font: inherit;
+    box-sizing: border-box;
+}
+
+
+/* ---------- Organização das etapas no modal de Nova Carga ---------- */
+
+.frete-modal-dialog {
+    width: min(100%, 1020px);
+}
+
+.frete-modal-etapa {
+    margin-top: 22px;
+    padding-top: 22px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.frete-modal-etapa-titulo {
+    font-size: 16px;
+    font-weight: 700;
+    color: #173c37;
+    margin: 0 0 14px;
+}
+
+.frete-modal-etapa-descricao {
+    font-size: 13px;
+    color: #64748b;
+    line-height: 1.55;
+    margin: -5px 0 16px;
+}
+
+.frete-modal-percurso {
+    margin: 18px 0 6px;
+    padding: 14px 0 4px;
+    border-top: 1px solid #edf0f0;
+}
+
+.frete-modal-percurso-titulo {
+    font-size: 12px;
+    font-weight: 700;
+    color: #334155;
+    margin-bottom: 12px;
+}
+
+.frete-modal-percurso-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.frete-modal-percurso-item small {
+    display: block;
+    color: #64748b;
+    font-size: 11px;
+    margin-bottom: 5px;
+}
+
+.frete-modal-percurso-item strong {
+    display: block;
+    color: #173c37;
+    font-size: 16px;
+}
+
+.frete-modal-percurso-veiculo {
+    font-size: 12px;
+    color: #64748b;
+    margin: 14px 0 0;
+}
+
+.frete-modal-negociacao-foco .frete-suggestion {
+    border-top: 0;
+    padding-top: 0;
+}
+
+.frete-modal-negociacao-foco .frete-actions {
+    display: none;
+}
+
+.frete-modal-negociacao-foco .negociacao-box {
+    display: block !important;
+}
+
+.frete-modal-edicao[hidden] {
+    display: none !important;
+}
+
+.frete-modal-edicao {
+    border-top: 0;
+    margin-top: 0;
+    padding-top: 0;
+}
+
+
+/* ---------- Estados e utilitários do modal ---------- */
+
+.dados-salvos {
+    background: #267d69 !important;
+    color: white !important;
+}
+
+.frete-modal-vazio-propostas {
+    padding: 14px;
+    color: #64748b;
+    font-size: 13px;
+    background: #f7f9f9;
+    border-radius: 8px;
+}
+
+.frete-modal-trocar {
+    margin: 12px 0;
+}
+
+.frete-modal-operacao .frete-actions[hidden],
+.frete-modal-operacao .frete-suggestion-body[hidden],
+.frete-modal-operacao .toggle-button[hidden] {
+    display: none !important;
+}
+
+
+/* ---------- Responsivo ---------- */
+
+@media (max-width: 700px) {
+    .frete-resumo-dados {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .frete-resumo-rodape {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .frete-modal-campos {
+        grid-template-columns: 1fr;
+    }
+
+    .frete-modal-percurso-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+}

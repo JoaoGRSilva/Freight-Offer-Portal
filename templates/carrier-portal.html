@@ -440,7 +440,7 @@ Oferta de Fretes | Digital Freight Offering Portal
 
                         <button
                             type="button"
-                            class="oferta-btn oferta-btn-primario btn-manifestar" disabled title="Envio de propostas em implantação"
+                            class="oferta-btn oferta-btn-primario btn-manifestar"
                             data-frete-id="{{ frete_id }}"
                             data-frete-numero="{{ numero_frete }}"
                         >
@@ -646,6 +646,64 @@ Oferta de Fretes | Digital Freight Offering Portal
     </div>
 
 </section>
+
+<!-- =========================================
+     MODAL DE PROPOSTA
+========================================= -->
+
+<div id="modal-proposta" class="modal" hidden>
+
+    <!-- fundo escuro: clicar fecha o modal -->
+    <div class="modal-fundo" onclick="fecharModalProposta()"></div>
+
+    <!-- caixa do modal -->
+    <div class="modal-caixa" role="dialog" aria-modal="true"
+         aria-labelledby="modal-titulo">
+
+        <div class="modal-cabecalho">
+            <div>
+                <h3 id="modal-titulo">Manifestar interesse</h3>
+                <span id="proposta-frete-label"></span>
+            </div>
+
+            <button type="button" class="modal-fechar"
+                    onclick="fecharModalProposta()"
+                    aria-label="Fechar">×</button>
+        </div>
+
+        <form id="form-proposta">
+
+            <input type="hidden" id="proposta-frete-id">
+            <input type="hidden" id="proposta-transportadora">
+
+            <label for="proposta-valor">Valor da proposta (R$)</label>
+            <input type="number" id="proposta-valor"
+                   step="0.01" min="0" required>
+
+            <label for="proposta-prazo">Prazo (dias)</label>
+            <input type="number" id="proposta-prazo"
+                   min="1" value="1" required>
+
+            <label for="proposta-observacoes">Observações</label>
+            <textarea id="proposta-observacoes" rows="3"></textarea>
+
+            <p id="proposta-mensagem"></p>
+
+            <div class="modal-acoes">
+                <button type="button" class="oferta-btn oferta-btn-secundario"
+                        onclick="fecharModalProposta()">
+                    Cancelar
+                </button>
+
+                <button type="submit" id="proposta-enviar"
+                        class="oferta-btn oferta-btn-primario">
+                    Enviar proposta
+                </button>
+            </div>
+
+        </form>
+    </div>
+</div>
 
 
 {% endblock %}
