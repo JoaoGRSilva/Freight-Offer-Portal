@@ -245,7 +245,7 @@ def process_fretes(arquivo) -> dict:
             "pedidos_clientes": pedidos_clientes,
             "peso_kg": float(g["peso_kg"].sum()),
             "data_carga": (
-                primeira["data_frete"].strftime("%Y-%m-%d")
+                primeira["data_frete"].strftime("%d-%m-%Y").replace("-","/")
                 if pd.notna(primeira["data_frete"]) else None
             ),
             "planta": planta,
