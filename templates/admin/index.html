@@ -1,0 +1,20 @@
+
+{% extends "base.html" %}
+
+{% block styles %}
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/pages/admin.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<section class="admin-ui">
+<header class="admin-heading"><div><small>GESTÃO DO PORTAL</small><h1>Administração</h1><p>Configurações, acessos e sustentação do portal.</p></div><span class="admin-tag">Administrador LATAM</span></header>
+<div class="admin-grid">
+<a class="admin-panel admin-module" href="{{ url_for('admin.users') }}"><small>01 · ACESSOS</small><h2>Usuários e permissões</h2><p>Cadastre usuários, defina perfis e vincule plantas.</p><strong>Gerenciar usuários →</strong></a>
+<a class="admin-panel admin-module" href="{{ url_for('admin.plants') }}"><small>02 · CADASTROS</small><h2>Plantas</h2><p>Código, CEP, cidade e UF das plantas, com ativação e validação.</p><strong>Gerenciar plantas →</strong></a>
+{% for title,desc in [('Custos e ANTT','Coeficientes, diesel e referências de mercado.'),('Motor de recomendação','Histórico, SLA e critérios de seleção.'),('Veículos e consumo','Capacidades, eixos e parâmetros de consumo.'),('Transportadoras','Cadastro e elegibilidade de transportadoras.'),('Atualizações e auditoria','Sincronizações e histórico de alterações.')] %}
+<div class="admin-panel admin-module"><small>EM DESENVOLVIMENTO</small><h2>{{ title }}</h2><p>{{ desc }}</p><span class="admin-tag">Próxima etapa</span></div>
+{% endfor %}
+</div></section>
+{% endblock %}

@@ -1,0 +1,873 @@
+
+/* =========================================
+   OFERTA DE FRETES
+   ========================================= */
+
+.ofertas {
+    width: 100%;
+    margin-top: 28px;
+}
+
+/* CABEÇALHO DA LISTA */
+
+.ofertas-cabecalho {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 22px;
+}
+
+.ofertas-cabecalho h2 {
+    margin: 0 0 6px;
+    font-size: 20px;
+    font-weight: 700;
+    color: #172b31;
+}
+
+.ofertas-cabecalho p {
+    margin: 0;
+    font-size: 13px;
+    color: #74838a;
+}
+
+.ofertas-contador {
+    padding: 8px 14px;
+    border: 1px solid #e0e8e6;
+    border-radius: 30px;
+    background: #f7faf9;
+    color: #487367;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* LISTA */
+
+.ofertas-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+/* CARD */
+
+.oferta-card {
+    padding: 24px;
+    border: 1px solid #e2e9e7;
+    border-radius: 16px;
+    background: #ffffff;
+    box-shadow: 0 3px 12px rgba(20, 40, 40, 0.035);
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.oferta-card:hover {
+    border-color: #bfd6ce;
+    box-shadow: 0 6px 20px rgba(20, 40, 40, 0.06);
+}
+
+/* TOPO */
+
+.oferta-topo {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+}
+
+.oferta-identificacao {
+    min-width: 0;
+}
+
+.oferta-codigo {
+    margin-bottom: 9px;
+    color: #71838a;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+}
+
+.oferta-rota {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 10px;
+    color: #19343a;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+.oferta-seta {
+    color: #2f8773;
+    font-size: 19px;
+    font-weight: 500;
+}
+
+.oferta-pedidos {
+    color: #697c83;
+    font-size: 12px;
+}
+
+.oferta-pedidos span {
+    font-weight: 600;
+}
+
+/* STATUS */
+
+.oferta-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 12px;
+    border-radius: 30px;
+    background: #eaf6f0;
+    color: #277b61;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.oferta-status-ponto {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #2f9876;
+}
+
+/* CLIENTE */
+
+.oferta-cliente {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-top: 20px;
+    padding: 15px;
+    border: 1px solid #edf2f0;
+    border-radius: 11px;
+    background: #f7faf9;
+}
+
+.oferta-cliente-icone {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 9px;
+    background: #e4f0eb;
+    color: #277b65;
+    font-size: 19px;
+}
+
+.oferta-cliente-conteudo {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.oferta-cliente-nome {
+    color: #244039;
+    font-size: 13px;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.oferta-cliente-codigo {
+    margin-bottom: 6px;
+    color: #81908d;
+    font-size: 11px;
+}
+
+/* LABELS */
+
+.oferta-label {
+    display: block;
+    color: #7b8b8c;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.055em;
+    line-height: 1.5;
+}
+
+/* DADOS */
+
+.oferta-dados {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.oferta-dado {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+    padding: 15px;
+    border: 1px solid #f0f3f2;
+    border-radius: 10px;
+    background: #f8faf9;
+}
+
+.oferta-dado strong {
+    color: #1e353a;
+    font-size: 14px;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.oferta-dado-valor {
+    border-color: #dceee5;
+    background: #f0f8f3;
+}
+
+.oferta-dado-valor strong {
+    color: #24765b;
+}
+
+/* OBSERVAÇÕES */
+
+.oferta-observacoes {
+    margin-top: 18px;
+    padding: 15px 17px;
+    border-left: 3px solid #39947c;
+    border-radius: 0 9px 9px 0;
+    background: #f5f9f7;
+}
+
+.oferta-observacoes-titulo {
+    margin-bottom: 7px;
+    color: #34735f;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+}
+
+.oferta-observacoes p {
+    margin: 0;
+    color: #435b57;
+    font-size: 13px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+/* RODAPÉ */
+
+.oferta-rodape {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-top: 22px;
+    padding-top: 17px;
+    border-top: 1px solid #edf1f0;
+}
+
+.oferta-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.oferta-tag {
+    padding: 6px 11px;
+    border: 1px solid #e3e9e7;
+    border-radius: 20px;
+    background: #f7f9f8;
+    color: #607771;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.oferta-tag-transfer {
+    border-color: #e9e0ca;
+    background: #fbf6e8;
+    color: #927333;
+}
+
+/* BOTÕES */
+
+.oferta-acoes {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.oferta-btn {
+    min-height: 39px;
+    padding: 10px 15px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.oferta-btn-secundario {
+    border-color: #dce5e2;
+    background: #ffffff;
+    color: #345c52;
+}
+
+.oferta-btn-secundario:hover {
+    background: #f2f8f5;
+    border-color: #a9cabe;
+}
+
+.oferta-btn-primario {
+    background: #2f806d;
+    color: #ffffff;
+}
+
+.oferta-btn-primario:hover:not(:disabled) {
+    background: #256c5b;
+}
+
+.oferta-btn:disabled {
+    background: #e8efec;
+    color: #8a9c96;
+    cursor: not-allowed;
+}
+
+/* DETALHES EXPANSÍVEIS */
+
+.oferta-detalhes[hidden] {
+    display: none !important;
+}
+
+.oferta-detalhes {
+    margin-top: 20px;
+    padding: 20px;
+    border: 1px solid #e4eeea;
+    border-radius: 11px;
+    background: #fbfdfc;
+}
+
+.oferta-detalhes h4 {
+    margin: 0 0 18px;
+    color: #243d3b;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.oferta-detalhes-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.oferta-detalhes-grid > div {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.oferta-detalhes-grid strong {
+    color: #344c4a;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.oferta-rota-detalhada {
+    margin-top: 22px;
+}
+
+.oferta-paradas {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 9px;
+    margin-top: 10px;
+}
+
+.oferta-parada {
+    padding: 8px 11px;
+    border: 1px solid #e0e9e5;
+    border-radius: 7px;
+    background: #ffffff;
+    color: #35574e;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.oferta-parada-seta {
+    color: #6a9889;
+    font-size: 16px;
+}
+
+.oferta-transferencia,
+.oferta-detalhes-observacoes {
+    margin-top: 18px;
+    color: #49615c;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.oferta-detalhes-observacoes p {
+    margin: 5px 0 0;
+    white-space: pre-wrap;
+}
+
+/* ESTADO VAZIO */
+
+.oferta-vazio {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 65px 25px;
+    border: 1px dashed #d9e5e0;
+    border-radius: 15px;
+    background: #fbfdfc;
+    text-align: center;
+}
+
+.oferta-vazio-icone {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 60px;
+    height: 60px;
+    margin-bottom: 18px;
+    border-radius: 16px;
+    background: #e9f5ef;
+    color: #2c846c;
+    font-size: 30px;
+}
+
+.oferta-vazio h3 {
+    margin: 0 0 10px;
+    color: #25453d;
+    font-size: 18px;
+}
+
+.oferta-vazio p {
+    max-width: 400px;
+    margin: 0;
+    color: #788985;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+/* RESPONSIVIDADE */
+
+@media (max-width: 900px) {
+    .oferta-dados {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 650px) {
+    .ofertas-cabecalho {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .oferta-card {
+        padding: 17px;
+    }
+
+    .oferta-topo {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .oferta-rota {
+        font-size: 17px;
+    }
+
+    .oferta-dados {
+        grid-template-columns: 1fr;
+    }
+
+    .oferta-rodape {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .oferta-acoes {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .oferta-btn {
+        width: 100%;
+    }
+
+    .oferta-detalhes-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* =========================================
+   OPERAÇÃO COM TRANSBORDO
+   ========================================= */
+
+.oferta-transbordo {
+    margin-top: 20px;
+    padding: 18px;
+    border: 1px solid #e7d8b5;
+    border-radius: 12px;
+    background: #fffcf5;
+}
+
+.oferta-transbordo-cabecalho {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+.oferta-transbordo-etiqueta {
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: #f8eacb;
+    color: #8b6423;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+}
+
+.oferta-transbordo-cabecalho > strong {
+    color: #826832;
+    font-size: 12px;
+}
+
+.oferta-transbordo-rota {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.oferta-transbordo-ponto {
+    flex: 1;
+    min-width: 0;
+    padding: 13px;
+    border: 1px solid #ece5d5;
+    border-radius: 9px;
+    background: #ffffff;
+}
+
+.oferta-transbordo-ponto.destaque {
+    border-color: #e1c68b;
+    background: #fff5df;
+}
+
+.oferta-transbordo-ponto small {
+    display: block;
+    margin-bottom: 7px;
+    color: #937e54;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.oferta-transbordo-ponto strong {
+    color: #55482d;
+    font-size: 13px;
+    overflow-wrap: anywhere;
+}
+
+.oferta-transbordo-seta {
+    flex-shrink: 0;
+    color: #ae9155;
+    font-size: 20px;
+}
+
+.oferta-transbordo-aviso {
+    margin: 15px 0 0;
+    color: #806f4b;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+@media (max-width: 650px) {
+    .oferta-transbordo-rota {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .oferta-transbordo-seta {
+        align-self: center;
+        transform: rotate(90deg);
+    }
+}
+
+
+
+/* SIMULAÇÃO DE TRANSPORTADORA */
+
+.oferta-ambiente-teste {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 18px 20px;
+    margin-top: 24px;
+    border: 1px solid #e4d7ad;
+    border-radius: 12px;
+    background: #fffbef;
+}
+
+.oferta-ambiente-teste strong {
+    color: #785e26;
+    font-size: 14px;
+}
+
+.oferta-ambiente-teste p {
+    margin: 5px 0 0;
+    color: #8a774f;
+    font-size: 12px;
+}
+
+.oferta-ambiente-teste select {
+    min-width: 260px;
+    max-width: 100%;
+    padding: 11px 12px;
+    border: 1px solid #d8c89c;
+    border-radius: 8px;
+    background: white;
+    font-family: inherit;
+    font-size: 13px;
+}
+
+/* MODAL DE PROPOSTA */
+
+.proposta-overlay[hidden] {
+    display: none !important;
+}
+
+.proposta-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    background: rgba(18, 35, 33, 0.55);
+}
+
+.proposta-modal {
+    width: 100%;
+    max-width: 490px;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 26px;
+    border-radius: 16px;
+    background: #ffffff;
+    box-shadow: 0 20px 70px rgba(0, 0, 0, 0.16);
+}
+
+.proposta-modal-topo {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 22px;
+}
+
+.proposta-modal-topo h2 {
+    margin: 0;
+    color: #203d37;
+    font-size: 20px;
+}
+
+.proposta-modal-topo p {
+    margin: 6px 0 0;
+    color: #71827d;
+    font-size: 12px;
+}
+
+.proposta-fechar {
+    border: 0;
+    background: transparent;
+    color: #7b8984;
+    font-size: 27px;
+    cursor: pointer;
+}
+
+#form-proposta {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#form-proposta label {
+    margin-top: 6px;
+    color: #405b52;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+#form-proposta input,
+#form-proposta textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #dce6e1;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #263d36;
+    font-family: inherit;
+    font-size: 13px;
+    box-sizing: border-box;
+}
+
+#form-proposta input:focus,
+#form-proposta textarea:focus {
+    outline: 2px solid #a4d5c2;
+    border-color: #4b997c;
+}
+
+#form-proposta input[readonly] {
+    background: #f4f8f6;
+}
+
+#proposta-mensagem {
+    min-height: 18px;
+    margin: 4px 0;
+    font-size: 12px;
+}
+
+.proposta-modal-acoes {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+@media (max-width: 650px) {
+    .oferta-ambiente-teste select {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .proposta-modal {
+        padding: 20px;
+    }
+}
+
+/* =========================================
+   WEATHER — COMPACT CARD
+   ========================================= */
+
+.oferta-clima {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+
+    margin: 14px 0 18px;
+    padding: 12px 16px;
+
+    background: #f7f9fa;
+    border: 1px solid #e6eaed;
+    border-radius: 10px;
+}
+
+.oferta-clima-principal {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.oferta-clima-icone {
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: #ffffff;
+    border-radius: 10px;
+}
+
+.oferta-clima-icone img {
+    width: 44px;
+    height: 44px;
+    object-fit: contain;
+}
+
+.oferta-clima-conteudo {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+}
+
+.oferta-clima-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    color: #8493a3;
+    text-transform: uppercase;
+}
+
+.oferta-clima-resumo {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 9px;
+}
+
+.oferta-clima-resumo strong {
+    font-size: 20px;
+    font-weight: 700;
+    color: #172b39;
+}
+
+.oferta-clima-resumo span {
+    font-size: 12px;
+    color: #64748b;
+}
+
+.oferta-clima-metricas {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    flex-shrink: 0;
+}
+
+.oferta-clima-metricas > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    color: #64748b;
+    white-space: nowrap;
+}
+
+.oferta-clima-simbolo {
+    font-size: 14px;
+}
+
+@media (max-width: 600px) {
+    .oferta-clima {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .oferta-clima-metricas {
+        padding-left: 60px;
+        gap: 14px;
+    }
+}

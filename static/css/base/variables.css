@@ -1,0 +1,15 @@
+/* Shared design tokens */
+:root {
+    --color-primary: #2f7d6d;
+    --color-primary-hover: #286b5e;
+    --color-text: #111111;
+    --color-muted: #64748b;
+    --color-border: #e5e7eb;
+    --color-surface: #f7f9fa;
+    --status-preparing: #64748b;
+    --status-offered: #F08B1F;
+    --status-negotiating: #48A2CF;
+    --status-accepted: #B2BF00;
+    --status-completed: #BD69D7;
+    --status-cancelled: #D34252;
+}

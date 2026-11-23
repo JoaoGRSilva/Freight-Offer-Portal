@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Frete {{ registro.get('num') or frete.get('num') or registro.get('numero_frete') }} | Digital Freight Offering Portal{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/freight-details.css') }}">{% endblock %}
+{% block content %}
+<main class="fd-page" id="freight-details-root">
+  <div class="fd-breadcrumb"><a href="{{ url_for('fretes.fretes') }}">← Mesa de Fretes</a><span>/</span>Detalhes do frete</div>
+  <header class="fd-header"><div><div class="fd-eyebrow">GESTÃO OPERACIONAL · FRETE #{{ registro['id'] }}</div><h1>Frete {{ registro.get('num') or frete.get('num') or registro.get('numero_frete') or registro['id'] }}</h1><p id="fd-subtitle">Informações e acompanhamento da contratação</p></div><span id="fd-status" class="fd-status"></span></header>
+  <div id="fd-notice" class="fd-notice" role="status" hidden></div>
+  <section class="fd-metrics" id="fd-metrics"></section>
+  <div class="fd-layout">
+    <div class="fd-main">
+      <section class="fd-panel"><div class="fd-section-title"><h2>01 · Informações da carga</h2><span>Dados de origem e destino</span></div><div id="fd-carga"></div></section>
+      <section class="fd-panel"><div class="fd-section-title"><h2>02 · Percurso e custos</h2><span>Estimativas de transporte</span></div><div id="fd-percurso"></div></section>
+      <section class="fd-panel"><div class="fd-section-title"><h2>03 · Transportadora</h2><span>Recomendação e seleção</span></div><div id="fd-recomendacao"></div></section>
+      <section class="fd-panel"><div class="fd-section-title"><h2>04 · Negociação e propostas</h2><span>Registro e histórico</span></div><div id="fd-negociacao"></div></section>
+      <section class="fd-panel"><div class="fd-section-title"><h2>05 · SAP e encerramento</h2><span>Confirmação operacional</span></div><div id="fd-fechamento"></div></section>
+    </div>
+    <aside class="fd-aside"><section class="fd-panel"><h2>Controle da oferta</h2><p class="fd-muted">As ações disponíveis dependem do status do frete.</p><div id="fd-actions" class="fd-actions"></div></section><section class="fd-panel"><h2>Dados da carga</h2><form id="fd-edit-form"><label>Tipo de carga<select name="tipo_carga"><option value="batida">Batida</option><option value="paletizada">Paletizada</option></select></label><label>Peso líquido (kg)<input type="number" name="peso_liquido_kg" min="0.01" step="0.01" placeholder="Não informado"></label><label>Valor inicial de negociação (R$)<input type="number" name="valor_inicial_negociacao" min="0" step="0.01" placeholder="Opcional"></label><label>Comentários / instruções<textarea name="comentarios_carga" rows="4" maxlength="3000" placeholder="Informações para a transportadora"></textarea></label><button type="submit" class="fd-btn fd-primary" id="fd-save">Salvar dados</button><p id="fd-edit-hint" class="fd-muted"></p></form></section></aside>
+  </div>
+</main>
+{% endblock %}
+{% block scripts %}
+<script id="fd-data" type="application/json">
+{{ {
+    'frete': frete | default({}, true),
+    'registro': registro | default({}, true),
+    'propostas': propostas | default([], true),
+    'fechamento': fechamento | default(none),
+    'transportadoras_negociacao':
+        transportadoras_negociacao | default([], true)
+} | tojson }}
+</script>
+
+<script src="{{ url_for('static', filename='js/freight-details.js') }}">
+</script>
+{% endblock %}

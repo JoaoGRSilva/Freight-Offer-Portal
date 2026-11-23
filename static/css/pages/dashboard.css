@@ -1,0 +1,110 @@
+/* Extracted from original global.css: dashboard */
+
+.grafico {
+width: 100%;
+    padding: 30px 40px;
+}
+
+.grafico h2 {
+margin-bottom: 20px;
+    font-size: 32px;
+}
+
+.grafico-container {
+position: relative;
+    width: 100%;
+    height: 350px;
+}
+
+.blocos-kpi {
+display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+    padding: 30px 40px;
+}
+
+.bloco-kpi {
+background: white;
+    border-radius: 12px;
+    padding: 25px;
+}
+
+.kpi-transportadoras {
+width: 100%;
+    overflow-x: auto;
+}
+
+.kpi-transportadoras table {
+width: 100%;
+    border-collapse: collapse;
+}
+
+.kpi-transportadoras th,
+.kpi-transportadoras td {
+padding: 12px 15px;
+    border-bottom: 1px solid #ddd;
+    text-align: left;
+}
+
+.kpi-transportadoras th {
+font-weight: 600;
+}
+
+.mapa-container {
+width: 100%;
+    height: 430px;
+    position: relative;
+}
+
+#mapaBrasil {
+width: 100%;
+    height: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+@media (max-width: 900px) {
+.blocos-kpi {
+grid-template-columns: 1fr;
+}
+}
+
+/* KPIs — mesmo padrão visual da Nova Carga */
+.indicadores {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    padding: 0;
+    margin: 28px 0 24px;
+    border-bottom: 0;
+}
+.indicadores .kpi {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+    padding: 18px 20px;
+    background: #fff;
+    border: 1px solid #e6eaf0;
+    border-top: 3px solid #64748b;
+    border-radius: 12px;
+}
+.indicadores .kpi h2 {
+    font-size: 25px;
+    line-height: 1.2;
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+.indicadores .kpi p { font-size: 12px; color: #888; margin: 0; }
+.indicadores .kpi:nth-child(1) { border-top-color: #64748b; }
+.indicadores .kpi:nth-child(1) h2 { color: #64748b; }
+.indicadores .kpi:nth-child(2) { border-top-color: #F08B1F; }
+.indicadores .kpi:nth-child(2) h2 { color: #F08B1F; }
+.indicadores .kpi:nth-child(3) { border-top-color: #B2BF00; }
+.indicadores .kpi:nth-child(3) h2:not(.positivo):not(.negativo) { color: #849000; }
+.indicadores .kpi:nth-child(4) { border-top-color: #48A2CF; }
+.indicadores .kpi:nth-child(4) h2 { color: #48A2CF; }
+.indicadores .kpi h2.positivo { color: #22c55e; }
+.indicadores .kpi h2.negativo { color: #ef4444; }
+@media (max-width: 900px) { .indicadores { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 540px) { .indicadores { grid-template-columns: 1fr; } }

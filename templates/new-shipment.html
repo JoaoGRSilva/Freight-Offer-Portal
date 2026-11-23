@@ -1,0 +1,2793 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/new-shipment.css') }}">
+{% endblock %}
+
+{% block title %}Nova Carga | Digital Freight Offering Portal{% endblock %}
+
+{% block content %}
+
+<div class="frete-modal-overlay" id="frete-modal" hidden>
+
+    <div class="frete-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="frete-modal-titulo">
+
+        <div class="frete-modal-barra">
+
+            <h2 id="frete-modal-titulo">Detalhes e ações do frete</h2>
+
+            <button type="button" class="frete-modal-fechar" onclick="fecharModalFrete()" aria-label="Fechar">×</button>
+
+        </div>
+
+        <div id="frete-modal-conteudo"></div>
+
+        <div class="frete-modal-edicao" id="frete-modal-edicao">
+
+            <h3>Dados da carga</h3>
+
+            <div class="frete-modal-campos">
+
+                <label>Tipo de carga
+
+                    <select id="modal-tipo-carga">
+
+                        <option value="batida">Batida</option>
+
+                        <option value="paletizada">Paletizada</option>
+
+                    </select>
+
+                </label>
+
+                <label>Peso líquido (kg)
+
+                    <input id="modal-peso-liquido" type="number" min="0.01" step="0.01" placeholder="Não informado">
+
+                </label>
+
+            </div>
+
+            <div class="frete-modal-campos-adicionais">
+
+                <label for="modal-valor-inicial">Valor inicial de negociação (R$) — opcional</label>
+
+                <input id="modal-valor-inicial" type="number" min="0" step="0.01" placeholder="Ex.: 1250,00">
+
+                <label for="modal-comentarios">Comentários / instruções para transportadoras — opcional</label>
+
+                <textarea id="modal-comentarios" rows="3" maxlength="3000" placeholder="Ex.: agendar coleta, restrições de veículo..."></textarea>
+
+            </div>
+
+            <div class="frete-modal-acoes">
+
+                <button type="button" id="modal-salvar-carga" class="btn btn-primary" onclick="salvarDadosCarga()">Salvar dados</button>
+
+                <button type="button" id="modal-retirar-oferta" class="btn btn-secondary" onclick="retirarOfertaModal()">Retirar oferta</button>
+
+            </div>
+
+            <p class="frete-modal-ajuda" id="modal-aviso-edicao"></p>
+
+        </div>
+
+    </div>
+
+</div>
+
+<style>
+
+.frete-resumo-card{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:20px;margin-bottom:14px;box-shadow:0 2px 7px rgba(15,23,42,.035)}
+
+.frete-resumo-topo,.frete-resumo-rodape{display:flex;justify-content:space-between;gap:16px;align-items:center}
+
+.frete-resumo-topo h3{margin:6px 0;font-size:18px;color:#152c32}
+
+.frete-resumo-status{background:#eef6f3;color:#267764;padding:6px 12px;border-radius:20px;font-size:12px;white-space:nowrap}
+
+.frete-resumo-dados{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:18px 0}
+
+.frete-resumo-dados span{background:#f6f8f8;border-radius:9px;padding:12px;display:flex;flex-direction:column;gap:7px}
+
+.frete-resumo-dados small{font-size:10px;color:#6b7280;letter-spacing:.03em}
+
+.frete-resumo-dados strong{font-size:14px;color:#152c32}
+
+.frete-resumo-rodape{border-top:1px solid #edf0f0;padding-top:13px;font-size:13px}
+
+.frete-modal-overlay[hidden],.frete-modal-acoes [hidden]{display:none!important}
+
+.frete-modal-overlay{position:fixed;inset:0;background:rgba(18,32,39,.65);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px}
+
+.frete-modal-dialog{background:white;width:min(100%,960px);max-height:92vh;overflow:auto;border-radius:16px;box-shadow:0 22px 60px rgba(0,0,0,.23);padding:24px}
+
+.frete-modal-barra{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e5e7eb;padding-bottom:12px;margin-bottom:16px}
+
+.frete-modal-barra h2{font-size:18px;margin:0}
+
+.frete-modal-fechar{border:0;background:#f1f5f9;border-radius:8px;font-size:24px;cursor:pointer;width:38px;height:38px}
+
+.frete-modal-edicao{border-top:1px solid #e5e7eb;padding-top:20px;margin-top:16px}
+
+.frete-modal-edicao h3{font-size:15px;margin-bottom:14px}
+
+.frete-modal-campos{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+.frete-modal-campos label{font-size:12px;font-weight:600;display:flex;flex-direction:column;gap:8px}
+
+.frete-modal-campos input,.frete-modal-campos select{padding:10px;border:1px solid #cbd5e1;border-radius:8px;font:inherit}
+
+.frete-modal-acoes{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+
+.frete-modal-ajuda{font-size:12px;color:#64748b;margin-top:12px}
+
+@media(max-width:700px){.frete-resumo-dados{grid-template-columns:repeat(2,minmax(0,1fr))}.frete-resumo-rodape{flex-direction:column;align-items:stretch}.frete-modal-campos{grid-template-columns:1fr}}
+
+.frete-modal-campos-adicionais { display: flex; flex-direction: column; gap: 9px; margin-top: 16px; }
+
+.frete-modal-campos-adicionais label { font-size: 12px; font-weight: 600; }
+
+.frete-modal-campos-adicionais input,
+
+.frete-modal-campos-adicionais textarea { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font: inherit; box-sizing: border-box; }
+
+/* Organização das etapas no modal de Nova Carga */
+.frete-modal-dialog {
+    width: min(100%, 1020px);
+}
+.frete-modal-etapa {
+    margin-top: 22px;
+    padding-top: 22px;
+    border-top: 1px solid #e5e7eb;
+}
+.frete-modal-etapa-titulo {
+    font-size: 16px;
+    font-weight: 700;
+    color: #173c37;
+    margin: 0 0 14px;
+}
+.frete-modal-etapa-descricao {
+    font-size: 13px;
+    color: #64748b;
+    line-height: 1.55;
+    margin: -5px 0 16px;
+}
+.frete-modal-percurso {
+    margin: 18px 0 6px;
+    padding: 14px 0 4px;
+    border-top: 1px solid #edf0f0;
+}
+.frete-modal-percurso-titulo {
+    font-size: 12px;
+    font-weight: 700;
+    color: #334155;
+    margin-bottom: 12px;
+}
+.frete-modal-percurso-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+}
+.frete-modal-percurso-item small {
+    display: block;
+    color: #64748b;
+    font-size: 11px;
+    margin-bottom: 5px;
+}
+.frete-modal-percurso-item strong {
+    display: block;
+    color: #173c37;
+    font-size: 16px;
+}
+.frete-modal-percurso-veiculo {
+    font-size: 12px;
+    color: #64748b;
+    margin: 14px 0 0;
+}
+.frete-modal-negociacao-foco .frete-suggestion {
+    border-top: 0;
+    padding-top: 0;
+}
+.frete-modal-negociacao-foco .frete-actions {
+    display: none;
+}
+.frete-modal-negociacao-foco .negociacao-box {
+    display: block !important;
+}
+.frete-modal-edicao[hidden] {
+    display: none !important;
+}
+.frete-modal-edicao {
+    border-top: 0;
+    margin-top: 0;
+    padding-top: 0;
+}
+@media (max-width: 700px) {
+    .frete-modal-percurso-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+}
+
+.dados-salvos { background: #267d69 !important; color: white !important; }
+.frete-modal-vazio-propostas { padding: 14px; color: #64748b; font-size: 13px; background: #f7f9f9; border-radius: 8px; }
+.frete-modal-trocar { margin: 12px 0; }
+.frete-modal-operacao .frete-actions[hidden],
+.frete-modal-operacao .frete-suggestion-body[hidden],
+.frete-modal-operacao .toggle-button[hidden] { display: none !important; }
+</style>
+
+<section class="page-header">
+
+    <div class="kicker">Inteligência de transporte</div>
+
+    <h1>Fretes para análise</h1>
+
+    <p>
+
+        Sugestões de transportadora com base no histórico de viagens,
+
+        características da rota e desempenho operacional.
+
+    </p>
+
+</section>
+
+
+    <section class="kpis">
+
+        <div class="kpi">
+            <div class="kpi-label">Em preparação</div>
+            <div class="kpi-value" id="kpi-preparacao">0</div>
+        </div>
+
+        <div class="kpi">
+            <div class="kpi-label">Em oferta</div>
+            <div class="kpi-value" id="kpi-oferta">0</div>
+        </div>
+
+        <div class="kpi">
+            <div class="kpi-label">Em negociação</div>
+            <div class="kpi-value" id="kpi-negociacao">0</div>
+        </div>
+
+        <div class="kpi">
+            <div class="kpi-label">Cotação aceita</div>
+            <div class="kpi-value green" id="kpi-aceita">0</div>
+        </div>
+
+        <div class="kpi">
+            <div class="kpi-label">Concluídos</div>
+            <div class="kpi-value green" id="kpi-concluidos">0</div>
+        </div>
+
+        <div class="kpi">
+            <div class="kpi-label">Total de fretes</div>
+            <div class="kpi-value" id="kpi-total">0</div>
+        </div>
+
+    </section>
+
+
+    {% if current_user.role == 'internal' %}
+    <form class="upload-card" method="post"
+
+        action="{{ url_for('nova-carga.upload') }}"
+
+        enctype="multipart/form-data">
+
+        <div>
+
+            <div class="kpi-label">Base de fretes</div>
+
+            <div class="upload-hint">Formatos aceitos: XLSX, CSV ou Parquet. O nome do arquivo deve conter o código da planta (ex.: fretes_1304.xlsx).{% if not current_user.is_admin %} Suas plantas: {{ current_user.plants | join(', ') or 'nenhuma vinculada' }}.{% endif %}</div>
+
+        </div>
+
+        <div class="upload-actions">
+
+            <input type="file" id="novosfretes" name="basedefretes"
+
+                accept=".csv,.xlsx,.xls,.parquet">
+
+            <label for="novosfretes" class="btn btn-secondary">Escolher arquivo</label>
+
+            <span class="upload-filename" id="upload-filename">
+
+                Nenhum arquivo selecionado
+
+            </span>
+
+            <button type="submit" class="btn btn-primary" id="upload-submit" disabled>
+
+                Enviar
+
+            </button>
+
+        </div>
+
+    </form>
+
+
+    {% if current_user.is_admin %}
+
+        <form method="POST" action="{{ url_for('nova-carga.limpar') }}" onsubmit="return confirm('temcerteza que deseja remover todos os fretes?')">
+            <button type="submit" class="btn btn-danger">
+                Limpar Base
+            </button>
+
+
+        </form>
+
+    {% endif %}
+
+
+    {% endif %}
+
+
+        {% with mensagens = get_flashed_messages() %}
+
+        {% if mensagens %}
+
+            <div class="upload-flash">
+
+                {% for m in mensagens %}<div>{{ m }}</div>{% endfor %}
+
+            </div>
+
+        {% endif %}
+
+    {% endwith %}
+
+<section class="filters">
+
+    <div class="filters-top">
+
+        <div class="filters-title">Filtrar fretes</div>
+
+        <button class="clear-filters" onclick="limparFiltros()">Limpar filtros</button>
+
+    </div>
+
+    <div class="filter-grid">
+
+        <input type="text" id="search" class="filter-input"
+
+                placeholder="Buscar pedido, origem, destino ou transportadora...">
+
+        <select id="tipo" class="filter-select">
+
+            <option value="">Todos os tipos</option>
+
+            <option value="Direta">Rota direta</option>
+
+            <option value="Múltiplas paradas">Múltiplas paradas</option>
+
+            <option value="Transbordo">Transbordo</option>
+
+        </select>
+
+        <select id="confianca" class="filter-select">
+
+            <option value="">Toda confiança</option>
+
+            <option value="Alta">Alta</option>
+
+            <option value="Média">Média</option>
+
+            <option value="Baixa">Baixa</option>
+
+        </select>
+
+        <select id="statusFiltro" class="filter-select">
+
+            <option value="">Todos os status</option>
+
+            <option value="em_preparacao">Em preparação</option>
+
+            <option value="em_oferta">Em oferta</option>
+
+            <option value="negociacao">Em negociação</option>
+
+            <option value="cotacao_aceita">Cotação aceita</option>
+
+            <option value="concluido">Concluído</option>
+
+        </select>
+
+    </div>
+
+</section>
+
+<section>
+
+    <div class="results-header">
+
+        <h2>Fretes disponíveis</h2>
+
+        <div class="results-count" id="results-count">0 fretes encontrados</div>
+
+    </div>
+
+    <div id="fretes-container"></div>
+
+    <div class="empty-state" id="empty-state">
+
+        <strong>Nenhum frete encontrado</strong>
+
+        Tente alterar os filtros utilizados.
+
+    </div>
+
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+
+<script>
+
+// DADOS VINDOS DO FLASK
+const dadosFretes = {{ fretes | tojson }};
+
+// NORMALIZAÇÃO DA RECOMENDAÇÃO
+dadosFretes.forEach(frete => {
+
+    const r = frete.recomendacao || {};
+
+    // Caminhão: vem da recomendação (ou do próprio frete, se o backend mandar)
+    frete.caminhao = r.caminhao || frete.caminhao || null;
+
+    frete.transportadora = r.transportadora || "—";
+
+    frete.sla = r.sla || "—";
+
+    frete.confianca = r.confianca || "Baixa";
+
+    frete.detalhe = r.detalhe || "Sem informações de recomendação.";
+
+    frete.alternativas = r.alternativas || [];
+
+    frete.outras_transportadoras = r.outras_transportadoras || [];
+
+    frete.viagens_transportadora = r.viagens_transportadora || 0;
+
+    frete.viagens_similares = r.viagens_similares || 0;
+
+    frete.custo_medio_frete = r.custo_medio_frete ?? null;
+
+    frete.rs_por_kg = r.rs_por_kg ?? null;
+
+    frete.periodo_historico_meses = r.periodo_historico_meses || 12;
+
+    frete.tipo = frete.tipo || r.tipo || "Direta";
+
+    frete.escopo = r.escopo || null;
+
+    frete.aviso = r.aviso || null;
+
+    frete.avisos = r.avisos || (r.aviso ? [r.aviso] : []);
+
+    frete.similarity = r.similarity || null;
+
+    frete.similarRoutes = r.similarRoutes || null;
+
+});
+
+// UTILITÁRIOS
+function esc(texto) {
+
+    return String(texto ?? "")
+
+        .replace(/&/g, "&amp;")
+
+        .replace(/</g, "&lt;")
+
+        .replace(/>/g, "&gt;")
+
+        .replace(/"/g, "&quot;")
+
+        .replace(/'/g, "&#39;");
+
+}
+
+function semSugestao(nome) {
+
+    return !nome || nome === "—";
+
+}
+
+function formatarMoeda(valor) {
+
+    if (valor === null || valor === undefined || valor === "") return "—";
+
+    return Number(valor).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+}
+
+function formatarMoedaKg(valor) {
+
+    if (valor === null || valor === undefined || valor === "") return "—";
+
+    return Number(valor).toLocaleString("pt-BR", {
+
+        style: "currency",
+
+        currency: "BRL",
+
+        minimumFractionDigits: 2,
+
+        maximumFractionDigits: 2
+
+    }) + "/kg";
+
+}
+
+function formatarClientes(frete) {
+
+    const clientes = Array.isArray(frete.clientes)
+
+        ? frete.clientes
+
+        : [];
+
+    if (!clientes.length && frete.customer) {
+
+        clientes.push({
+
+            customer_id: frete.customer,
+
+            customer_name: null
+
+        });
+
+    }
+
+    if (!clientes.length) {
+
+        return "Cliente não informado";
+
+    }
+
+    return clientes.map(cliente => {
+
+        const nome = cliente.customer_name;
+
+        const id = cliente.customer_id;
+
+        if (nome && nome.trim()) {
+
+            return `${nome} (${id})`;
+
+        }
+
+        return id || "Cliente não informado";
+
+    }).join(", ");
+
+}
+
+// R$/kg a partir da estimativa do frete e do peso do pedido
+// (estimativa = R$/100 kg x peso / 100  ->  R$/kg = estimativa / peso)
+function kgDeMedia(media, frete) {
+
+    const m = Number(media);
+
+    const p = Number(frete.peso_kg);
+
+    if (media === null || media === undefined || !(m > 0) || !(p > 0)) return null;
+
+    return m / p;
+
+}
+
+function formatarNumero(valor) {
+
+    if (valor === null || valor === undefined || valor === "") return "—";
+
+    return Number(valor).toLocaleString("pt-BR");
+
+}
+
+function formatarLitros(valor) {
+
+    if (valor === null || valor === undefined) return "—";
+
+    return Number(valor).toLocaleString("pt-BR", {
+
+        minimumFractionDigits: 2,
+
+        maximumFractionDigits: 2
+
+    });
+
+}
+
+function textoCaminhao(c) {
+
+    if (!c) return "Não definido";
+
+    if (c.excede) return "Excede a capacidade máxima";
+
+    if (!c.tipo) return "Não definido";
+
+    return `${c.tipo} · ${c.eixos} eixos`;
+
+}
+
+function normalizar(texto) {
+
+    return String(texto ?? "")
+
+        .toLowerCase()
+
+        .normalize("NFD")
+
+        .replace(/[\u0300-\u036f]/g, "")
+
+        .trim();
+
+}
+
+function trechosDoFrete(frete) {
+
+    return (frete.trechos || []).map(t => ({
+
+        origem:  t.origem  || t.from || t.cidade_origem  || t.origem_cidade  || "",
+
+        destino: t.destino || t.to   || t.cidade_destino || t.destino_cidade || "",
+
+        km:      t.distancia_km ?? t.km ?? null
+
+    }));
+
+}
+
+function cidadesDaRota(frete) {
+
+    let cidades = [];
+
+    if (frete.stops && frete.stops.length) {
+
+        cidades = [...frete.stops];
+
+    } else {
+
+        trechosDoFrete(frete).forEach((t, i) => {
+
+            if (i === 0 && t.origem) cidades.push(t.origem);
+
+            if (t.destino) cidades.push(t.destino);
+
+        });
+
+    }
+
+    // Sem trechos: monta com o transbordo informado
+    if (!cidades.length && frete.transfer) {
+
+        cidades = [frete.origem, frete.transfer, frete.destino];
+
+    }
+
+    // A planta é sempre a origem: se a lista começa em outra cidade
+    // (primeira parada), coloca a planta na frente.
+    if (cidades.length && frete.origem) {
+
+        const primeira = normalizar(cidades[0]);
+
+        const origem = normalizar(frete.origem);
+
+        if (!primeira.startsWith(origem)) cidades.unshift(frete.origem);
+
+    }
+
+    return cidades;
+
+}
+
+function htmlRota(frete) {
+
+    const cidades = cidadesDaRota(frete);
+
+    if (!cidades.length) return "";
+
+    const transf = normalizar(frete.transfer);
+
+    const ultimo = cidades.length - 1;
+
+    const unicoMeio = frete.tipo === "Transbordo" && cidades.length === 3;
+
+    const papel = (cidade, i) => {
+
+        if (i === 0)      return { classe: "stop-origem",  rotulo: "Origem" };
+
+        if (i === ultimo) return { classe: "stop-destino", rotulo: "Destino final" };
+
+        const c = normalizar(cidade);
+
+        const ehTransbordo =
+
+            unicoMeio || (transf && (transf.includes(c) || c.includes(transf)));
+
+        return ehTransbordo
+
+            ? { classe: "stop-transbordo", rotulo: "Transbordo" }
+
+            : { classe: "", rotulo: "Parada" };
+
+    };
+
+    return `
+
+        <div class="stops">
+
+            ${cidades.map((cidade, i) => {
+
+                const p = papel(cidade, i);
+
+                return `
+
+                    <span class="stop ${p.classe}">
+
+                        <small>${p.rotulo}</small>
+
+                        ${esc(cidade)}
+
+                    </span>
+
+                    ${i < ultimo ? `<span class="stop-arrow">→</span>` : ""}
+
+                `;
+
+            }).join("")}
+
+        </div>
+
+    `;
+
+}
+
+function htmlTransbordo(frete) {
+
+    if (!frete.transfer && frete.tipo !== "Transbordo") return "";
+
+    const trechos = trechosDoFrete(frete);
+
+    const local = frete.transfer || trechos[0]?.destino || "—";
+
+    const destinoFinal = trechos.length
+
+        ? trechos[trechos.length - 1].destino
+
+        : frete.destino;
+
+    const legsHTML = trechos.length >= 2
+
+        ? `
+
+            <ol class="leg-list">
+
+                ${trechos.map((t, i) => `
+
+                    <li>
+
+                        <span class="leg-tag ${i === 0 ? "" : "complemento"}">
+
+                            ${i === 0 ? "1º frete" : "Frete complementar"}
+
+                        </span>
+
+                        ${esc(t.origem)} → ${esc(t.destino)}
+
+                        ${t.km ? `<span class="leg-km">· ${formatarNumero(t.km)} km</span>` : ""}
+
+                    </li>
+
+                `).join("")}
+
+            </ol>
+
+        `
+
+        : "";
+
+    return `
+
+        <div class="transfer-box">
+
+            <div class="transfer-title">Como funciona este transbordo</div>
+
+            <div class="transfer-text">
+
+                A carga é levada até <b>${esc(local)}</b> (cidade, armazém ou galpão),
+
+                onde é transferida. De lá, o trecho final até
+
+                <b>${esc(destinoFinal)}</b> é um <b>frete complementar</b>,
+
+                contratado separadamente. Os dois fretes são pagos pela empresa.
+
+            </div>
+
+            ${legsHTML}
+
+        </div>
+
+    `;
+
+}
+
+// ESTADO
+const estado = {};
+
+dadosFretes.forEach(frete => {
+
+    const propostas = frete.propostas || [];
+
+    const propostaAceita = propostas.find(p => p.aceita === 1);
+
+    const ultimaProposta = propostas[0] || null;
+
+    const statusDb = frete.status_db || frete.status || "em_preparacao";
+
+    const transportadoraSalva =
+
+        frete.transportadora_escolhida ||
+
+        propostaAceita?.transportadora ||
+
+        ultimaProposta?.transportadora ||
+
+        frete.transportadora ||
+
+        "—";
+
+    estado[frete.id] = {
+
+        status: statusDb,
+
+        transportadora: transportadoraSalva,
+
+        negociacaoAberta:
+
+            statusDb === "negociacao" ||
+
+            statusDb === "cotacao_aceita",
+
+        escolhaManualAberta: false,
+
+        alternativasAbertas:
+
+            semSugestao(transportadoraSalva)
+
+    };
+
+});
+
+// DADOS DA TRANSPORTADORA EXIBIDA
+// (sugerida, alternativa ou escolhida à mão)
+function dadosEscolhida(frete) {
+
+    const nome = estado[frete.id].transportadora;
+
+    if (nome === frete.transportadora) {
+
+        return {
+
+            sla: frete.sla,
+
+            viagens: frete.viagens_transportadora,
+
+            media: frete.custo_medio_frete,
+
+            rs_kg: frete.rs_por_kg ?? kgDeMedia(frete.custo_medio_frete, frete),
+
+            confianca: frete.confianca,
+
+            detalhe: frete.detalhe
+
+        };
+
+    }
+
+    const alt = frete.alternativas.find(a => a.nome === nome);
+
+    if (alt) {
+
+        return {
+
+            sla: alt.sla || "—",
+
+            viagens: alt.viagens || 0,
+
+            media: alt.media_paga ?? null,
+
+            rs_kg: alt.rs_por_kg ?? kgDeMedia(alt.media_paga, frete),
+
+            confianca: alt.confianca || "Baixa",
+
+            detalhe: `Escolhida entre as alternativas (base: ${alt.base || "região"}).`
+
+        };
+
+    }
+
+    return {
+
+        sla: "—",
+
+        viagens: 0,
+
+        media: null,
+
+        rs_kg: null,
+
+        confianca: "Baixa",
+
+        detalhe: "Seleção manual: sem estatísticas desta transportadora para esta rota."
+
+    };
+
+}
+
+// RENDERIZAR FRETES
+function renderFretes(lista = dadosFretes) {
+
+    const container = document.getElementById("fretes-container");
+
+    container.innerHTML = "";
+
+    lista.forEach(frete => container.appendChild(criarCardFrete(frete)));
+
+    atualizarKPIs();
+
+    // Recria o conteúdo do modal após alterações de estado, sem fechá-lo.
+    if (freteModalAberto !== null && !document.getElementById("frete-modal").hidden) {
+        abrirModalFrete(freteModalAberto);
+    }
+
+    document.getElementById("results-count").innerText =
+
+        `${lista.length} ${lista.length === 1 ? "frete encontrado" : "fretes encontrados"}`;
+
+    document.getElementById("empty-state").style.display =
+
+        lista.length === 0 ? "block" : "none";
+
+}
+
+// CRIAR CARD
+const cardsDetalhados = new Map();
+
+let freteModalAberto = null;
+
+function criarCardFrete(frete) {
+
+    const card = document.createElement("article");
+
+    card.id = `frete-card-${frete.db_id}`;
+
+    const statusAtual = estado[frete.id].status;
+
+    const confirmado =
+
+        statusAtual === "cotacao_aceita" ||
+
+        statusAtual === "concluido";
+
+    const rotulosStatus = {
+
+        em_preparacao: "Em preparação",
+
+        em_oferta: "Em oferta",
+
+        negociacao: "Em negociação",
+
+        cotacao_aceita: "Cotação aceita",
+
+        concluido: "Concluído",
+
+        cancelado: "Cancelado",
+
+        disponivel: "Disponível (antigo)"
+
+    };
+
+    const botaoPublicar = (
+
+        statusAtual === "em_preparacao" && frete.db_id
+
+    )
+
+        ? `
+
+            <button
+
+                type="button"
+
+                class="btn btn-secondary"
+
+                onclick="publicarFrete(${Number(frete.db_id)})"
+
+            >
+
+                Publicar oferta
+
+            </button>
+
+        `
+
+        : "";
+
+    const nomeAtual = estado[frete.id].transportadora;
+
+    const sem = semSugestao(nomeAtual);
+
+    const d = dadosEscolhida(frete);
+
+    card.className = "frete-card" + (confirmado ? " confirmed" : "");
+
+    // ----- Badge da rota -----
+    const classeBadge =
+
+        frete.tipo === "Rota similar" ? "similar"
+
+        : frete.tipo === "Transbordo" ? "transbordo"
+
+        : "";
+
+    const textoBadge =
+
+        frete.tipo === "Transbordo" && frete.transfer
+
+            ? `Transbordo em ${frete.transfer}`
+
+            : frete.tipo;
+
+    const rotaBadge = `<span class="route-badge ${classeBadge}">${esc(textoBadge)}</span>`;
+
+    // ----- Avisos (um por linha) -----
+    const avisoHTML = frete.avisos.map(aviso => `
+
+        <div
+
+            class="suggestion-warning"
+
+            style="margin-top:12px; padding:10px 12px; border-left:3px solid #d9a400;
+
+                   background:#fff8e1; border-radius:6px; font-size:12px; line-height:1.45;"
+
+        >
+
+            ${esc(aviso)}
+
+        </div>
+
+    `).join("");
+
+    // ----- Alternativas (abertas quando não há sugestão) -----
+    let alternativesHTML = "";
+
+    if (frete.alternativas.length) {
+
+        const aberta = estado[frete.id].alternativasAbertas;
+
+        alternativesHTML = `
+
+            <button
+
+                class="toggle-button"
+
+                id="btn-alt-${frete.id}"
+
+                onclick="toggleAlternativas(${frete.id})"
+
+            >
+
+                ${aberta ? "Ocultar outras opções ▴" : "Ver outras opções ▾"}
+
+            </button>
+
+            <div class="alt-list ${aberta ? "open" : ""}" id="alternativas-${frete.id}">
+
+                ${frete.alternativas.map(alt => `
+
+                    <div class="alt-row">
+
+                        <div>
+
+                            <div class="alt-name">${esc(alt.nome)}</div>
+
+                            <div class="alt-stats">
+
+                                Valor pago por kg:
+
+                                ${formatarMoedaKg(alt.rs_por_kg ?? kgDeMedia(alt.media_paga, frete))}
+
+                                · SLA ${esc(alt.sla || "—")}
+
+                                · ${alt.viagens || 0} viagens
+
+                                ${alt.base && alt.base !== "região" ? `· base: ${esc(alt.base)}` : ""}
+
+                            </div>
+
+                        </div>
+
+                        <button
+
+                            class="choose-alt"
+
+                            data-nome="${esc(alt.nome)}"
+
+                            onclick="escolherTransportadora(${frete.id}, this.dataset.nome)"
+
+                        >
+
+                            Escolher
+
+                        </button>
+
+                    </div>
+
+                `).join("")}
+
+            </div>
+
+        `;
+
+    }
+
+    // ----- Escolha manual entre todas as transportadoras PJ (VBR6) -----
+    // O seletor sempre existe quando há opções, mas só fica visível
+    // quando não há sugestão/similaridade ou após clicar em "Escolher outra".
+    const semSimilaridade =
+
+        !frete.similarity ||
+
+        !frete.similarity.viagens ||
+
+        frete.similarity.viagens === 0;
+
+    const semHistorico =
+
+        frete.tipo === "Sem histórico" ||
+
+        frete.tipo === "Sem rota similar";
+
+    const semBase = semSimilaridade || semHistorico || sem;
+
+    const manualHTML = frete.outras_transportadoras.length
+
+        ? `
+
+            <div class="manual-pick" id="manual-box-${frete.id}"
+
+                 style="display:${semBase || estado[frete.id].escolhaManualAberta ? "flex" : "none"}; gap:8px; margin-top:12px; align-items:center;"
+
+                <select id="manual-${frete.id}" class="filter-select" style="flex:1;">
+
+                    <option value="">Escolher entre todas as transportadoras PJ…</option>
+
+                    ${frete.outras_transportadoras.map(nome => `
+
+                        <option value="${esc(nome)}">${esc(nome)}</option>
+
+                    `).join("")}
+
+                </select>
+
+                <button class="btn btn-secondary" onclick="escolherManual(${frete.id})">
+
+                    Selecionar
+
+                </button>
+
+            </div>
+
+        `
+
+        : "";
+
+    const propostas = frete.propostas || [];
+
+    const propostaAceita = propostas.find(p => p.aceita === 1);
+
+    const fechamento = frete.fechamento || null;
+
+    const historicoHTML = propostas.length
+
+        ? `
+
+            <div class="historico-propostas">
+
+                <h4>Histórico de propostas</h4>
+
+                ${propostas.map(p => `
+
+                    <div class="proposta-item">
+
+                        <div>
+
+                            <strong>${esc(p.transportadora)}</strong>
+
+                            <div>
+
+                                ${formatarMoeda(p.valor)}
+
+                                · ${p.prazo_dias ?? "—"} dias
+
+                            </div>
+
+                        </div>
+
+                        ${
+
+                            p.aceita === 1
+
+                            ? `<span>✓ Proposta aceita</span>`
+
+                            : !propostaAceita && !fechamento
+
+                            ? `
+
+                                <form method="POST"
+
+                                    action="/nova-carga/fretes/${frete.db_id}/propostas/${p.id}/aceitar">
+
+                                    <button type="submit"
+
+                                        class="btn btn-secondary">
+
+                                        Aceitar proposta
+
+                                    </button>
+
+                                </form>
+
+                            `
+
+                            : ""
+
+                        }
+
+                    </div>
+
+                `).join("")}
+
+            </div>
+
+        `
+
+        : "";
+
+    const negociacaoHTML = `
+
+        <div
+
+            class="negociacao-box"
+
+            id="negociacao-${frete.id}"
+
+            style="display:${estado[frete.id].negociacaoAberta ? "block" : "none"};"
+
+        >
+
+            <div class="frete-suggestion-label">
+
+                Negociação da transportadora
+
+            </div>
+
+            <p class="negociacao-hint">
+
+                Registre a proposta recebida após negociar
+
+                com a transportadora selecionada.
+
+            </p>
+
+            <form
+
+                method="POST"
+
+                action="/nova-carga/fretes/${frete.db_id}/propostas"
+
+                onsubmit="return enviarPropostaModal(event, ${frete.id})"
+
+            >
+
+                <label>Transportadora selecionada</label>
+
+                <input
+
+                    type="text"
+
+                    id="transportadora-${frete.id}"
+
+                    name="transportadora"
+
+                    value="${esc(nomeAtual === '—' ? '' : nomeAtual)}"
+
+                    readonly
+
+                    required
+
+                >
+
+                <div class="negociacao-grid">
+
+                    <div>
+
+                        <label>Valor negociado (R$)</label>
+
+                        <input
+
+                            type="number"
+
+                            name="valor"
+
+                            min="0.01"
+
+                            step="0.01"
+
+                            placeholder="0,00"
+
+                            required
+
+                        >
+
+                    </div>
+
+                    <div>
+
+                        <label>Prazo (dias)</label>
+
+                        <input
+
+                            type="number"
+
+                            name="prazo_dias"
+
+                            min="0"
+
+                            max="365"
+
+                        >
+
+                    </div>
+
+                </div>
+
+                <label>Observações</label>
+
+                <textarea
+
+                    name="observacoes"
+
+                    rows="2"
+
+                    placeholder="Condições da negociação..."
+
+                ></textarea>
+
+                <button
+
+                    type="submit"
+
+                    class="btn btn-primary"
+
+                    ${!frete.db_id || sem ? "disabled" : ""}
+
+                >
+
+                    Registrar proposta
+
+                </button>
+
+            </form>
+
+            ${historicoHTML}
+
+            ${propostaAceita && !fechamento ? `
+
+                <div class="confirmacao-sap">
+
+                    <h4>Confirmar contratação no SAP</h4>
+
+                    <form method="POST"
+
+                        action="/nova-carga/fretes/${frete.db_id}/confirmar-sap">
+
+                        <label>Referência do frete no SAP</label>
+
+                        <input
+
+                            type="text"
+
+                            name="referencia_sap"
+
+                            placeholder="Número ou referência SAP"
+
+                            required
+
+                        >
+
+                        <button type="submit" class="btn btn-primary">
+
+                            Confirmar contratação SAP
+
+                        </button>
+
+                    </form>
+
+                </div>
+
+            ` : ""}
+
+            ${fechamento ? `
+
+                <div class="confirmacao-sap">
+
+                    <strong>✓ Contratação confirmada</strong>
+
+                    <p>Referência SAP: ${esc(fechamento.referencia_sap)}</p>
+
+                </div>
+
+            ` : ""}
+
+        </div>
+
+    `;
+
+    // =========================================
+    // CARD
+    // =========================================
+
+    const concluirHTML =
+        statusAtual === "cotacao_aceita" && frete.db_id
+            ? `
+                <div class="frete-modal-etapa">
+                    <h4>Encerramento operacional</h4>
+                    <p>
+                        Confirme a conclusão somente após
+                        a operação ter sido finalizada.
+                    </p>
+                    <button
+                        type="button"
+                        class="btn btn-primary"
+                        onclick="concluirFrete(${frete.id})"
+                    >
+                        Concluir frete
+                    </button>
+                </div>
+            `
+            : "";
+
+
+
+    card.innerHTML = `
+
+        <div class="frete-header">
+
+            <div>
+
+                <div class="frete-kicker">Frete ${esc(frete.num)}</div>
+
+                    <h3>
+
+                        ${esc(frete.origem)}
+
+                        <span style="color:#aaa;">→</span>
+
+                        ${esc(frete.destino)}
+
+                        ${frete.transfer ? `<span class="via-transfer">via ${esc(frete.transfer)}</span>` : ""}
+
+                    </h3>
+
+                <div class="frete-meta">
+
+                    Pedido ${esc(frete.pedido)}
+
+                </div>
+
+            </div>
+
+            <span class="status ${confirmado ? "confirmed" : "pending"}">
+
+                ${esc(rotulosStatus[statusAtual] || "Em preparação")}
+
+            </span>
+
+        </div>
+
+        <div class="frete-route-info">
+
+            ${rotaBadge}
+
+            <span class="route-info-text">
+
+                ${
+
+                    frete.trechos
+
+                        ? `${frete.trechos.length} ${frete.trechos.length === 1 ? "trecho" : "trechos"}`
+
+                        : "Rota direta"
+
+                }
+
+            </span>
+
+        </div>
+
+        ${htmlRota(frete)}
+
+        ${htmlTransbordo(frete)}
+
+        <div class="details-grid">
+
+            <div class="detail">
+
+                <div class="detail-label">Peso</div>
+
+                <div class="detail-value">${formatarNumero(frete.peso_kg)} kg</div>
+
+            </div>
+
+            <div class="detail">
+
+                <div class="detail-label">Custo ANTT</div>
+
+                <div class="detail-value">${formatarMoeda(frete.calculo?.antt)}</div>
+
+            </div>
+
+            <div class="detail">
+
+                <div class="detail-label">Custo Mercado</div>
+
+                <div class="detail-value">${formatarMoeda(frete.calculo?.mercado)}</div>
+
+            </div>
+
+            <div class="detail">
+
+                <div class="detail-label">Data de Carga</div>
+
+                <div class="detail-value">${esc(frete.data_carga ? frete.data_carga.split("-").reverse().join("/") : "—")}</div>
+
+            </div>
+
+        </div>
+
+        <div class="frete-modal-percurso">
+            <div class="frete-modal-percurso-titulo">Informações do percurso</div>
+            <div class="frete-modal-percurso-grid">
+                <div class="frete-modal-percurso-item">
+                    <small>Distância total</small>
+                    <strong>${formatarNumero(frete.calculo?.distancia_total_km)} km</strong>
+                </div>
+                <div class="frete-modal-percurso-item">
+                    <small>Combustível estimado</small>
+                    <strong>${formatarLitros(frete.calculo?.litros_totais)} L</strong>
+                </div>
+                <div class="frete-modal-percurso-item">
+                    <small>Custo de combustível</small>
+                    <strong>${formatarMoeda(frete.calculo?.custo_combustivel)}</strong>
+                </div>
+            </div>
+            <p class="frete-modal-percurso-veiculo">
+                Veículo recomendado: ${esc(textoCaminhao(frete.caminhao))}
+            </p>
+        </div>
+
+        <div class="frete-suggestion">
+
+            <div class="frete-suggestion-label">
+
+                ${nomeAtual === frete.transportadora ? "Sugestão de transportadora" : "Transportadora escolhida"}
+
+            </div>
+
+            <div class="frete-suggestion-body">
+
+                <div class="carrier-info">
+
+                    <div class="frete-carrier-name">
+
+                        ${sem ? "Nenhuma sugestão automática" : esc(nomeAtual)}
+
+                    </div>
+
+                    <div class="frete-suggestion-detail">${esc(d.detalhe)}</div>
+
+                    <span class="confidence ${
+
+                        d.confianca === "Alta" ? "high" : d.confianca === "Média" ? "medium" : "low"
+
+                    }">
+
+                        Confiança ${(d.confianca || "baixa").toLowerCase()}
+
+                    </span>
+
+                </div>
+
+                <div class="suggestion-metrics">
+
+                    <div class="suggestion-metric">
+
+                        <strong>${formatarMoedaKg(d.rs_kg)}</strong>
+
+                        <span>
+
+                            Valor pago por kg · últimos
+
+                            ${frete.periodo_historico_meses || "—"} meses
+
+                        </span>
+
+                    </div>
+
+                    <div class="suggestion-metric">
+
+                        <strong>${d.viagens || 0}</strong>
+
+                        <span>viagens da transportadora</span>
+
+                    </div>
+
+                    <div class="suggestion-metric">
+
+                        <strong>${esc(d.sla || "—")}</strong>
+
+                        <span>SLA</span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            ${avisoHTML}
+
+            ${alternativesHTML}
+
+            ${manualHTML}
+
+            ${negociacaoHTML}
+
+            <div class="frete-actions">
+
+                ${botaoPublicar}
+
+                <button class="btn btn-secondary" onclick="escolherOutra(${frete.id})">
+
+                    Escolher outra
+
+                </button>
+
+                <button
+
+                    class="btn btn-primary"
+
+                    onclick="confirmarSugestao(${frete.id})"
+
+                    ${sem ? "disabled" : ""}
+
+                >
+
+                    ${estado[frete.id].negociacaoAberta
+
+                        ? "✓ Transportadora selecionada"
+
+                        : "Confirmar transportadora"
+
+                    }
+
+                </button>
+
+            </div>
+
+        </div>
+
+        ${concluirHTML}
+
+    `;
+
+    cardsDetalhados.set(frete.id, card);
+
+    const resumo = document.createElement("article");
+
+    resumo.className = "frete-resumo-card";
+
+    resumo.id = `frete-card-${frete.db_id}`;
+
+    const status = estado[frete.id]?.status || "em_preparacao";
+
+    const transportadora = estado[frete.id]?.transportadora || "—";
+
+    resumo.innerHTML = `
+
+        <div class="frete-resumo-topo">
+
+            <div>
+
+                <div class="frete-kicker">
+
+                    Frete ${esc(frete.num || frete.db_id)}
+
+                </div>
+
+                <h3>${esc(frete.origem)} → ${esc(frete.destino)}</h3>
+
+                <div class="frete-meta">
+
+                    Pedido ${esc(frete.pedido || "—")}
+
+                </div>
+
+                <div class="frete-cliente">
+
+                    <small>CLIENTE</small>
+
+                    <strong>${esc(formatarClientes(frete))}</strong>
+
+                </div>
+
+            </div>
+
+            <span class="frete-resumo-status status-${status}">
+                ${esc(rotulosStatus[status] || status)}
+            </span>
+
+        </div>
+
+        <div class="frete-resumo-dados">
+
+            <span>
+
+                <small>PESO OPERACIONAL</small>
+
+                <strong>${formatarNumero(frete.peso_kg)} kg</strong>
+
+            </span>
+
+            <span>
+
+                <small>CUSTO ANTT</small>
+
+                <strong>${formatarMoeda(frete.calculo?.antt)}</strong>
+
+            </span>
+
+            <span>
+
+                <small>CUSTO MERCADO</small>
+
+                <strong>${formatarMoeda(frete.calculo?.mercado)}</strong>
+
+            </span>
+
+            <span>
+
+                <small>TIPO DE CARGA</small>
+
+                <strong>${frete.tipo_carga === "paletizada" ? "Paletizada" : "Batida"}</strong>
+
+            </span>
+
+        </div>
+
+        <div class="frete-resumo-rodape">
+
+            <span>
+
+                Transportadora:
+
+                <strong>${esc(transportadora)}</strong>
+
+            </span>
+
+            <button
+
+                type="button"
+
+                class="btn btn-primary frete-ver-detalhes"
+
+            >
+
+                Ver detalhes e ações
+
+            </button>
+
+        </div>
+
+    `;
+
+    resumo.querySelector(".frete-ver-detalhes")
+        .addEventListener("click", () => {
+            const freightId = Number(frete.db_id);
+
+            if (!Number.isInteger(freightId) || freightId <= 0) {
+                mostrarMensagem("Freight record not found.");
+                return;
+            }
+
+            window.location.href = `/fretes/${freightId}`;
+        });
+
+    return resumo;
+
+}
+
+async function enviarPropostaModal(event, id) {
+    event.preventDefault();
+    if (!prepararProposta(id)) return false;
+    const form = event.currentTarget;
+    const botao = form.querySelector('button[type="submit"]');
+    const textoOriginal = botao.textContent;
+    botao.disabled = true;
+    botao.textContent = "Salvando...";
+    try {
+        const resposta = await fetch(form.action, {
+            method: "POST",
+            body: new FormData(form),
+            headers: {"X-Requested-With": "XMLHttpRequest"}
+        });
+        const tipo = resposta.headers.get("content-type") || "";
+        const resultado = tipo.includes("application/json") ? await resposta.json() : null;
+        if (!resposta.ok || (resultado && !resultado.sucesso)) {
+            throw new Error(resultado?.mensagem || "Não foi possível salvar a proposta.");
+        }
+        mostrarMensagem("✓ Proposta registrada com sucesso!");
+        // O backend atual devolve redirect HTML; recarrega os dados do servidor
+        // e reabre automaticamente o mesmo frete para mostrar o histórico.
+        const frete = dadosFretes.find(f => f.id === id);
+        sessionStorage.setItem("reabrirFreteDb", String(frete.db_id));
+        window.location.reload();
+    } catch (erro) {
+        mostrarMensagem(erro.message);
+        botao.disabled = false;
+        botao.textContent = textoOriginal;
+    }
+    return false;
+}
+
+function prepararProposta(id) {
+
+    const frete = dadosFretes.find(f => f.id === id);
+
+    if (!frete?.db_id) {
+
+        mostrarMensagem("Frete ainda não associado ao SQLite.");
+
+        return false;
+
+    }
+
+    const nome = estado[id].transportadora;
+
+    if (semSugestao(nome)) {
+
+        mostrarMensagem("Selecione uma transportadora.");
+
+        return false;
+
+    }
+
+    return true;
+
+}
+
+// CONFIRMAR SUGESTÃO
+async function confirmarSugestao(id) {
+
+    const frete = dadosFretes.find(f => f.id === id);
+
+    const atual = estado[id];
+
+    if (!frete || !atual) return;
+
+    if (!frete.db_id) {
+
+        mostrarMensagem("Frete não encontrado no SQLite.");
+
+        return;
+
+    }
+
+    const nome = atual.transportadora;
+
+    if (semSugestao(nome)) {
+
+        mostrarMensagem("Selecione uma transportadora.");
+
+        return;
+
+    }
+
+    try {
+
+        const resposta = await fetch(
+
+            `/api/nova-carga/fretes/${frete.db_id}/negociacao`,
+
+            {
+
+                method: "POST",
+
+                headers: {
+
+                    "Content-Type": "application/json"
+
+                },
+
+                body: JSON.stringify({
+
+                    transportadora: nome
+
+                })
+
+            }
+
+        );
+
+        const texto = await resposta.text();
+
+        console.log("Status HTTP:", resposta.status);
+
+        console.log("URL da resposta:", resposta.url);
+
+        console.log("Resposta Flask:", texto.substring(0, 1000));
+
+        let resultado;
+
+        try {
+
+            resultado = JSON.parse(texto);
+
+        } catch {
+
+            throw new Error(
+
+                `O Flask retornou HTML em vez de JSON (HTTP ${resposta.status}). ` +
+
+                "Verifique o terminal do Python."
+
+            );
+
+        }
+
+        if (!resposta.ok || !resultado.sucesso) {
+
+            throw new Error(
+
+                resultado.erro || "Erro ao iniciar negociação."
+
+            );
+
+        }
+
+        // Atualiza a interface somente após salvar.
+        atual.status = "negociacao";
+
+        atual.negociacaoAberta = true;
+
+        frete.status_db = "negociacao";
+
+        frete.transportadora_escolhida = nome;
+
+        renderFretes(aplicarFiltros());
+
+        document.getElementById(
+
+            `negociacao-${id}`
+
+        )?.scrollIntoView({
+
+            behavior: "smooth",
+
+            block: "nearest"
+
+        });
+
+        mostrarMensagem(
+
+            "Negociação iniciada e salva com sucesso."
+
+        );
+
+    } catch (erro) {
+
+        console.error(erro);
+
+        mostrarMensagem(erro.message);
+
+    }
+
+}
+
+// ESCOLHER OUTRA
+// Abre as alternativas (se houver) e o seletor de todas as PJ.
+function escolherOutra(id) {
+
+    if (!estado[id]) return;
+
+    estado[id].escolhaManualAberta = true;
+
+    estado[id].alternativasAbertas = true;
+
+    renderFretes(aplicarFiltros());
+
+    const seletor = document.getElementById(`manual-${id}`);
+
+    if (seletor) {
+
+        seletor.focus();
+
+    }
+
+}
+
+// ESCOLHER ALTERNATIVA / MANUAL
+function escolherTransportadora(id, nome) {
+
+    if (!estado[id] || semSugestao(nome)) return;
+
+    estado[id].transportadora = nome;
+
+    estado[id].negociacaoAberta = false;
+
+    renderFretes(aplicarFiltros());
+
+    mostrarMensagem(
+
+        `Transportadora "${nome}" selecionada. ` +
+
+        "Clique em Confirmar transportadora para negociar."
+
+    );
+
+}
+
+function escolherManual(id) {
+
+    const seletor = document.getElementById(`manual-${id}`);
+
+    if (!seletor || !seletor.value) {
+
+        mostrarMensagem("Selecione uma transportadora na lista.");
+
+        return;
+
+    }
+
+    escolherTransportadora(id, seletor.value);
+
+}
+
+// TOGGLE DAS ALTERNATIVAS
+function toggleAlternativas(id) {
+
+    if (!estado[id]) return;
+
+    estado[id].alternativasAbertas =
+
+        !estado[id].alternativasAbertas;
+
+    renderFretes(aplicarFiltros());
+
+}
+
+// FILTROS
+function aplicarFiltros() {
+
+    const search = document.getElementById("search").value.toLowerCase().trim();
+
+    const tipo = document.getElementById("tipo").value;
+
+    const confianca = document.getElementById("confianca").value;
+
+    const status = document.getElementById("statusFiltro").value;
+
+    return dadosFretes.filter(frete => {
+
+        const textoBusca = [
+
+            frete.origem,
+
+            frete.destino,
+
+            frete.pedido,
+
+            estado[frete.id].transportadora
+
+        ]
+
+            .filter(Boolean)
+
+            .join(" ")
+
+            .toLowerCase();
+
+        // Confiança da transportadora atualmente exibida (sugerida ou escolhida)
+        const confiancaAtual = dadosEscolhida(frete).confianca;
+
+        return (
+
+            (!search || textoBusca.includes(search)) &&
+
+            (!tipo || frete.tipo === tipo) &&
+
+            (!confianca || confiancaAtual === confianca) &&
+
+            (!status || estado[frete.id].status === status)
+
+        );
+
+    });
+
+}
+
+// EVENTOS DOS FILTROS
+document.getElementById("search")
+
+    .addEventListener("input", () => renderFretes(aplicarFiltros()));
+
+["tipo", "confianca", "statusFiltro"].forEach(idCampo => {
+
+    document.getElementById(idCampo)
+
+        .addEventListener("change", () => renderFretes(aplicarFiltros()));
+
+});
+
+function limparFiltros() {
+
+    ["search", "tipo", "confianca", "statusFiltro"].forEach(idCampo => {
+
+        document.getElementById(idCampo).value = "";
+
+    });
+
+    renderFretes();
+
+}
+
+// =========================================
+// UPLOAD DA BASE DE FRETES
+// =========================================
+const inputArquivo = document.getElementById("novosfretes");
+
+const nomeArquivo = document.getElementById("upload-filename");
+
+const botaoUpload = document.getElementById("upload-submit");
+
+inputArquivo?.addEventListener("change", function () {
+
+    const arquivo = this.files[0];
+
+    if (!arquivo) {
+
+        nomeArquivo.innerText = "Nenhum arquivo selecionado";
+
+        botaoUpload.disabled = true;
+
+        return;
+
+    }
+
+    const extensao = arquivo.name.split(".").pop().toLowerCase();
+
+    const formatosAceitos = ["xlsx", "xls", "csv", "parquet"];
+
+    if (!formatosAceitos.includes(extensao)) {
+
+        nomeArquivo.innerText = "Formato não suportado";
+
+        botaoUpload.disabled = true;
+
+        mostrarMensagem("Selecione um arquivo XLSX, XLS, CSV ou Parquet.");
+
+        inputArquivo.value = "";
+
+        return;
+
+    }
+
+    nomeArquivo.innerText = arquivo.name;
+
+    botaoUpload.disabled = false;
+
+});
+
+const formularioUpload = document.querySelector(".upload-card");
+
+formularioUpload.addEventListener("submit", function () {
+
+    if (!inputArquivo.files.length) return;
+
+    botaoUpload.disabled = true;
+
+    botaoUpload.innerText = "Processando...";
+
+    nomeArquivo.innerText = `${inputArquivo.files[0].name} · processando histórico...`;
+
+});
+
+// KPIs
+
+function atualizarKPIs() {
+
+    const contagem = {
+        em_preparacao: 0,
+        em_oferta: 0,
+        negociacao: 0,
+        cotacao_aceita: 0,
+        concluido: 0,
+        cancelado: 0
+    };
+
+    dadosFretes.forEach(frete => {
+
+        const status =
+            estado[frete.id]?.status ||
+            frete.status_db ||
+            frete.status ||
+            "em_preparacao";
+
+        // Compatibilidade com status antigos
+        const statusNormalizado =
+            status === "disponivel"
+                ? "em_preparacao"
+                : status;
+
+        if (Object.prototype.hasOwnProperty.call(
+            contagem,
+            statusNormalizado
+        )) {
+            contagem[statusNormalizado]++;
+        }
+
+    });
+
+    const atualizar = (id, valor) => {
+        const elemento = document.getElementById(id);
+
+        if (elemento) {
+            elemento.textContent = valor.toLocaleString("pt-BR");
+        }
+    };
+
+    atualizar(
+        "kpi-preparacao",
+        contagem.em_preparacao
+    );
+
+    atualizar(
+        "kpi-oferta",
+        contagem.em_oferta
+    );
+
+    atualizar(
+        "kpi-negociacao",
+        contagem.negociacao
+    );
+
+    atualizar(
+        "kpi-aceita",
+        contagem.cotacao_aceita
+    );
+
+    atualizar(
+        "kpi-concluidos",
+        contagem.concluido
+    );
+
+    atualizar(
+        "kpi-total",
+        dadosFretes.length
+    );
+
+}
+
+
+// NOTIFICAÇÃO
+function mostrarMensagem(texto) {
+
+    const mensagem = document.createElement("div");
+
+    mensagem.innerText = texto;
+
+    Object.assign(mensagem.style, {
+
+        position: "fixed",
+
+        bottom: "25px",
+
+        right: "25px",
+
+        background: "#111",
+
+        color: "#fff",
+
+        padding: "13px 17px",
+
+        borderRadius: "8px",
+
+        fontSize: "12px",
+
+        boxShadow: "0 8px 25px rgba(0,0,0,.15)",
+
+        zIndex: "999"
+
+    });
+
+    document.body.appendChild(mensagem);
+
+    setTimeout(() => mensagem.remove(), 3000);
+
+}
+
+function abrirFretePelaURL() {
+
+    const params = new URLSearchParams(window.location.search);
+
+    const freteId = params.get("frete_id");
+
+    if (!freteId) return;
+
+    // Limpa filtros que poderiam esconder o card.
+    document.getElementById("search").value = "";
+
+    document.getElementById("tipo").value = "";
+
+    document.getElementById("confianca").value = "";
+
+    document.getElementById("statusFiltro").value = "";
+
+    renderFretes();
+
+    const card = document.getElementById(
+
+        `frete-card-${freteId}`
+
+    );
+
+    if (!card) {
+
+        mostrarMensagem(
+
+            "Frete não encontrado na carga exibida."
+
+        );
+
+        return;
+
+    }
+
+    const encontrado = dadosFretes.find(f => String(f.db_id) === String(freteId));
+
+    if (encontrado) abrirModalFrete(encontrado.id);
+
+    card.scrollIntoView({
+
+        behavior: "smooth",
+
+        block: "center"
+
+    });
+
+}
+
+// INICIALIZAÇÃO
+async function publicarFrete(freteId) {
+
+    if (!Number.isInteger(freteId) || freteId <= 0) {
+
+        mostrarMensagem("Frete sem identificação no SQLite.");
+
+        return;
+
+    }
+
+    const confirmar = window.confirm(
+
+        "Deseja publicar este frete na página Oferta de Fretes?"
+
+    );
+
+    if (!confirmar) return;
+
+    try {
+
+        const resposta = await fetch(
+
+            `/mesa/fretes/${freteId}/publicar`,
+
+            {
+
+                method: "POST"
+
+            }
+
+        );
+
+        const resultado = await resposta.json();
+
+        if (!resposta.ok || !resultado.sucesso) {
+
+            throw new Error(
+
+                resultado.mensagem || "Erro ao publicar frete."
+
+            );
+
+        }
+
+        mostrarMensagem("Frete publicado com sucesso!");
+
+        const frete = dadosFretes.find(
+
+            f => Number(f.db_id) === freteId
+
+        );
+
+        if (frete) {
+
+            frete.status_db = "em_oferta";
+
+            if (estado[frete.id]) {
+
+                estado[frete.id].status = "em_oferta";
+
+            }
+
+        }
+
+        renderFretes(aplicarFiltros());
+
+    } catch (erro) {
+
+        console.error(erro);
+
+        mostrarMensagem(erro.message);
+
+    }
+
+}
+
+function abrirModalFrete(id) {
+
+    const frete = dadosFretes.find(f => f.id === id);
+
+    if (!frete) return;
+
+    freteModalAberto = id;
+
+    const overlay = document.getElementById("frete-modal");
+
+    const conteudo = document.getElementById("frete-modal-conteudo");
+
+    // Retira o formulário do card antigo antes de substituí-lo.
+    const formularioExistente = document.getElementById("frete-modal-edicao");
+    if (formularioExistente && conteudo.contains(formularioExistente)) {
+        conteudo.after(formularioExistente);
+    }
+
+    // Cria o card detalhado usando o estado atual.
+    criarCardFrete(frete);
+
+    const card = cardsDetalhados.get(id);
+
+    if (!card) return;
+
+    card.removeAttribute("id");
+
+    conteudo.replaceChildren(card);
+
+    const edicao = document.getElementById("frete-modal-edicao");
+    const sugestao = card.querySelector(".frete-suggestion");
+    const statusAtual = estado[id]?.status || "em_preparacao";
+    const emPreparacao = ["em_preparacao", "disponivel"].includes(statusAtual);
+
+    // Preparação: resumo > dados da carga > sugestão.
+    // Oferta ou negociação: resumo > transportadora selecionada > propostas.
+    if (edicao && sugestao) {
+        edicao.hidden = !emPreparacao;
+        edicao.classList.add("frete-modal-etapa");
+
+        if (emPreparacao) {
+            sugestao.before(edicao);
+            sugestao.classList.add("frete-modal-etapa");
+        } else {
+            sugestao.classList.add("frete-modal-etapa", "frete-modal-operacao");
+            const cabecalho = sugestao.querySelector(".frete-suggestion-label");
+            if (cabecalho) cabecalho.textContent =
+                statusAtual === "em_oferta" ? "Ofertas recebidas e seleção" : "Negociação e propostas";
+
+            const body = sugestao.querySelector(".frete-suggestion-body");
+            if (body) body.hidden = true;
+            const avisos = sugestao.querySelectorAll(".suggestion-warning");
+            avisos.forEach(aviso => aviso.hidden = true);
+            const alt = sugestao.querySelector(".alt-list");
+            if (alt) alt.hidden = true;
+            const botaoAlt = sugestao.querySelector(".toggle-button");
+            if (botaoAlt) botaoAlt.hidden = true;
+
+            const acoes = sugestao.querySelector(".frete-actions");
+            if (acoes) {
+                acoes.hidden = !estado[id].escolhaManualAberta;
+                if (statusAtual !== "em_preparacao") {
+                    const publicar = acoes.querySelector('button[onclick^="publicarFrete"]');
+                    if (publicar) publicar.hidden = true;
+                }
+            }
+
+            const historico = sugestao.querySelector(".historico-propostas");
+            if (!historico) {
+                const vazio = document.createElement("p");
+                vazio.className = "frete-modal-vazio-propostas";
+                vazio.textContent = "Nenhuma proposta registrada até o momento.";
+                sugestao.appendChild(vazio);
+            }
+            const seletor = sugestao.querySelector(".manual-pick");
+            if (seletor) seletor.style.display = estado[id].escolhaManualAberta ? "flex" : "none";
+            const negociacao = sugestao.querySelector(".negociacao-box");
+            if (negociacao) {
+                negociacao.style.display = ["negociacao", "cotacao_aceita"].includes(statusAtual)
+                    ? "block" : "none";
+                // As propostas recebidas continuam visíveis durante a oferta.
+                if (statusAtual === "em_oferta" && historico) sugestao.appendChild(historico);
+            }
+
+            if (!sugestao.querySelector(".frete-modal-trocar")) {
+                const trocar = document.createElement("button");
+                trocar.type = "button";
+                trocar.className = "btn btn-secondary frete-modal-trocar";
+                trocar.textContent = "Selecionar outra transportadora";
+                trocar.addEventListener("click", () => escolherOutra(id));
+                sugestao.insertBefore(trocar, sugestao.querySelector(".manual-pick"));
+            }
+        }
+    }
+
+    const status = estado[id]?.status;
+
+    const editavel = ["em_preparacao", "disponivel"].includes(status);
+
+    document.getElementById("modal-tipo-carga").value = frete.tipo_carga || "batida";
+
+    document.getElementById("modal-peso-liquido").value = frete.peso_liquido_kg ?? "";
+
+    document.getElementById("modal-valor-inicial").value = frete.valor_inicial_negociacao ?? "";
+
+    document.getElementById("modal-comentarios").value = frete.comentarios_carga ?? "";
+
+    document.getElementById("modal-tipo-carga").disabled = !editavel;
+
+    document.getElementById("modal-peso-liquido").disabled = !editavel;
+
+    document.getElementById("modal-valor-inicial").disabled = !editavel;
+
+    document.getElementById("modal-comentarios").disabled = !editavel;
+
+    document.getElementById("modal-salvar-carga").hidden = !editavel;
+
+    document.getElementById("modal-retirar-oferta").hidden = status !== "em_oferta";
+
+    document.getElementById("modal-aviso-edicao").textContent = editavel
+
+        ? "O peso líquido é informativo e não altera automaticamente o peso operacional ou o custo."
+
+        : "Para editar, retire a oferta. Fretes em negociação ou concluídos não podem ser editados aqui.";
+
+    const botaoSalvar = document.getElementById("modal-salvar-carga");
+    botaoSalvar.textContent = "Salvar dados";
+    botaoSalvar.classList.remove("dados-salvos");
+    overlay.hidden = false;
+
+    document.body.style.overflow = "hidden";
+
+    overlay.querySelector(".frete-modal-fechar").focus();
+
+}
+
+function fecharModalFrete() {
+
+    document.getElementById("frete-modal").hidden = true;
+
+    const edicao = document.getElementById("frete-modal-edicao");
+    const conteudo = document.getElementById("frete-modal-conteudo");
+    if (edicao && conteudo) {
+        conteudo.after(edicao);
+        edicao.classList.remove("frete-modal-etapa");
+        edicao.hidden = false;
+    }
+    conteudo.replaceChildren();
+
+    document.body.style.overflow = "";
+
+    freteModalAberto = null;
+
+}
+
+async function salvarDadosCarga() {
+
+    const frete = dadosFretes.find(f => f.id === freteModalAberto);
+
+    if (!frete?.db_id) return mostrarMensagem("Frete não encontrado no SQLite.");
+
+    const tipo_carga = document.getElementById("modal-tipo-carga").value;
+
+    const pesoTexto = document.getElementById("modal-peso-liquido").value;
+
+    const peso_liquido_kg = pesoTexto === "" ? null : Number(pesoTexto);
+
+    const valorTexto = document.getElementById("modal-valor-inicial").value.trim();
+
+    const valor_inicial_negociacao = valorTexto === "" ? null : Number(valorTexto);
+
+    const comentarios_carga = document.getElementById("modal-comentarios").value.trim();
+
+    if (valor_inicial_negociacao !== null &&
+
+        (!Number.isFinite(valor_inicial_negociacao) || valor_inicial_negociacao < 0)) {
+
+        return mostrarMensagem("Informe um valor inicial válido ou deixe em branco.");
+
+    }
+
+    if (peso_liquido_kg !== null && (!Number.isFinite(peso_liquido_kg) || peso_liquido_kg <= 0)) {
+
+        return mostrarMensagem("Informe um peso líquido positivo.");
+
+    }
+
+    try {
+
+        const resposta = await fetch(`/nova-carga/fretes/${frete.db_id}/dados`, {
+
+            method: "PATCH", headers: {"Content-Type": "application/json"},
+
+            body: JSON.stringify({tipo_carga, peso_liquido_kg, valor_inicial_negociacao, comentarios_carga})
+
+        });
+
+        const dados = await resposta.json();
+
+        if (!resposta.ok || !dados.sucesso) throw new Error(dados.mensagem || "Erro ao salvar.");
+
+        frete.tipo_carga = tipo_carga;
+
+        frete.peso_liquido_kg = peso_liquido_kg;
+
+        frete.valor_inicial_negociacao = valor_inicial_negociacao;
+
+        frete.comentarios_carga = comentarios_carga;
+
+        renderFretes(aplicarFiltros());
+        const botao = document.getElementById("modal-salvar-carga");
+        botao.textContent = "✓ Dados salvos";
+        botao.classList.add("dados-salvos");
+        document.getElementById("modal-aviso-edicao").textContent =
+            "✓ Dados da carga atualizados com sucesso.";
+        mostrarMensagem("Dados da carga atualizados.");
+
+    } catch (erro) { mostrarMensagem(erro.message); }
+
+}
+
+
+async function concluirFrete(id) {
+
+    const frete = dadosFretes.find(f => f.id === id);
+
+    if (!frete?.db_id) {
+        mostrarMensagem("Frete não encontrado.");
+        return;
+    }
+
+    if (!window.confirm(
+        "Confirma que a operação deste frete foi concluída?"
+    )) {
+        return;
+    }
+
+    try {
+        const resposta = await fetch(
+            `/api/nova-carga/fretes/${frete.db_id}/concluir`,
+            { method: "POST" }
+        );
+
+        const resultado = await resposta.json();
+
+        if (!resposta.ok || !resultado.sucesso) {
+            throw new Error(
+                resultado.mensagem ||
+                "Não foi possível concluir o frete."
+            );
+        }
+
+        frete.status_db = "concluido";
+        estado[id].status = "concluido";
+        estado[id].negociacaoAberta = false;
+
+        renderFretes(aplicarFiltros());
+
+        mostrarMensagem("✓ Frete concluído com sucesso!");
+
+    } catch (erro) {
+        console.error(erro);
+        mostrarMensagem(erro.message);
+    }
+}
+
+
+async function retirarOfertaModal() {
+
+    const frete = dadosFretes.find(f => f.id === freteModalAberto);
+
+    if (!frete?.db_id) return;
+
+    if (!confirm("Deseja retirar este frete da Oferta de Fretes?")) return;
+
+    if (!confirm("Confirma a retirada? O frete voltará para Em preparação e poderá ser editado e republicado.")) return;
+
+    try {
+
+        const resposta = await fetch(`/mesa/fretes/${frete.db_id}/retirar-oferta`, {method:"POST"});
+
+        const dados = await resposta.json();
+
+        if (!resposta.ok || !dados.sucesso) throw new Error(dados.mensagem || "Erro ao retirar oferta.");
+
+        frete.status_db = "em_preparacao";
+
+        estado[frete.id].status = "em_preparacao";
+
+        fecharModalFrete();
+
+        renderFretes(aplicarFiltros());
+
+        mostrarMensagem("Oferta retirada. O frete voltou para preparação.");
+
+    } catch (erro) { mostrarMensagem(erro.message); }
+
+}
+
+document.getElementById("frete-modal").addEventListener("click", event => {
+
+    if (event.target.id === "frete-modal") fecharModalFrete();
+
+});
+
+document.addEventListener("keydown", event => {
+
+    if (event.key === "Escape" && !document.getElementById("frete-modal").hidden) fecharModalFrete();
+
+});
+
+renderFretes();
+
+abrirFretePelaURL();
+
+const reabrirDb = sessionStorage.getItem("reabrirFreteDb");
+if (reabrirDb) {
+    sessionStorage.removeItem("reabrirFreteDb");
+    const frete = dadosFretes.find(f => String(f.db_id) === reabrirDb);
+    if (frete) {
+        abrirModalFrete(frete.id);
+        mostrarMensagem("✓ Proposta salva. Histórico atualizado.");
+    }
+}
+
+</script>
+
+{% endblock %}

@@ -1,0 +1,193 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1">
+
+    <title>Login | Portal de Oferta de Cargas</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/base/variables.css') }}">
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/base/global.css') }}">
+
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap"
+          rel="stylesheet">
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: "DM Sans", sans-serif;
+            background: #f3f7f6;
+            color: #173d36;
+            display: grid;
+            place-items: center;
+        }
+
+        .login-container {
+            width: min(420px, 92vw);
+        }
+
+        .login-brand {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-brand h1 {
+            font-size: 24px;
+            margin-bottom: 6px;
+        }
+
+        .login-brand p {
+            color: #788c87;
+            font-size: 13px;
+        }
+
+        .login-card {
+            padding: 32px;
+            background: white;
+            border: 1px solid #e0e8e5;
+            border-radius: 18px;
+        }
+
+        .login-card h2 {
+            margin-top: 0;
+            margin-bottom: 8px;
+        }
+
+        .login-description {
+            font-size: 14px;
+            color: #788c87;
+            margin-bottom: 26px;
+        }
+
+        .login-card label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .login-card input {
+            width: 100%;
+            padding: 13px;
+            margin-bottom: 18px;
+            border: 1px solid #d6e0dc;
+            border-radius: 8px;
+            font-family: inherit;
+        }
+
+        .login-card input:focus {
+            outline: 2px solid #237a68;
+            outline-offset: 1px;
+        }
+
+        .login-button {
+            width: 100%;
+            border: 0;
+            padding: 14px;
+            border-radius: 8px;
+            background: #237a68;
+            color: white;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+        }
+
+        .login-error {
+            padding: 12px;
+            background: #fff1f0;
+            color: #a62929;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-bottom: 18px;
+        }
+
+        .login-footer {
+            text-align: center;
+            font-size: 12px;
+            color: #788c87;
+            margin-top: 22px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="login-container">
+
+        <div class="login-brand">
+            <h1>Portal de Oferta de Cargas</h1>
+            <p>Digital Freight Offering Portal</p>
+        </div>
+
+        <div class="login-card">
+
+            <h2>Acesse sua conta</h2>
+
+            <p class="login-description">
+                Entre para acessar o portal de fretes.
+            </p>
+
+            {% for category, message in
+                get_flashed_messages(with_categories=true) %}
+
+                <div class="login-error">
+                    {{ message }}
+                </div>
+
+            {% endfor %}
+
+            <form method="POST"
+                  action="{{ url_for('auth.login') }}">
+
+                <input type="hidden"
+                       name="csrf_token"
+                       value="{{ csrf_token }}">
+
+                <label for="email">E-mail</label>
+
+                <input id="email"
+                       name="email"
+                       type="email"
+                       autocomplete="username"
+                       placeholder="seu.email@empresa.com"
+                       required>
+
+                <label for="password">Senha</label>
+
+                <input id="password"
+                       name="password"
+                       type="password"
+                       autocomplete="current-password"
+                       placeholder="Digite sua senha"
+                       required>
+
+                <button type="submit"
+                        class="login-button">
+                    Entrar
+                </button>
+
+            </form>
+
+        </div>
+
+        <div class="login-footer">
+            Acesso exclusivo para colaboradores e
+            transportadoras autorizadas.
+        </div>
+
+    </div>
+
+</body>
+</html>

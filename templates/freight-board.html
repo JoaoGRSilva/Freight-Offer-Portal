@@ -1,0 +1,117 @@
+
+{% extends "base.html" %}
+
+{% block title %}
+Mesa de Fretes | Digital Freight Offering Portal
+{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/pages/freight-board.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<section class="page-header">
+    <div class="kicker">Gestão operacional</div>
+    <h1>Mesa de Fretes</h1>
+    <p>Acompanhe o andamento e o status dos fretes.</p>
+</section>
+
+<section class="kanban-kpis">
+    <div class="kanban-kpi">
+        <span>Total de fretes</span>
+        <strong id="kpi-total">0</strong>
+    </div>
+
+    <div class="kanban-kpi">
+        <span>Em preparação</span>
+        <strong id="kpi-disponiveis">0</strong>
+    </div>
+
+    <div class="kanban-kpi">
+        <span>Em negociação</span>
+        <strong id="kpi-negociacao">0</strong>
+    </div>
+
+    <div class="kanban-kpi">
+        <span>Cotação Aceita</span>
+        <strong id="kpi-cotacao_aceita">0</strong>
+    </div>
+</section>
+
+<section class="kanban-toolbar">
+    <input
+        type="search"
+        id="kanban-search"
+        placeholder="Buscar frete, origem ou destino..."
+        aria-label="Buscar fretes"
+    >
+</section>
+
+
+<section class="kanban-board" id="kanban-board">
+
+    <div class="kanban-column" data-status="em_preparacao">
+        <div class="kanban-column-header">
+            <h2>Em preparação</h2>
+            <span class="column-count">0</span>
+        </div>
+        <div class="kanban-items"></div>
+    </div>
+
+    <div class="kanban-column" data-status="em_oferta">
+        <div class="kanban-column-header">
+            <h2>Em oferta</h2>
+            <span class="column-count">0</span>
+        </div>
+        <div class="kanban-items"></div>
+    </div>
+
+    <div class="kanban-column" data-status="negociacao">
+        <div class="kanban-column-header">
+            <h2>Em negociação</h2>
+            <span class="column-count">0</span>
+        </div>
+        <div class="kanban-items"></div>
+    </div>
+
+    <div class="kanban-column" data-status="cotacao_aceita">
+        <div class="kanban-column-header">
+            <h2>Cotação aceita</h2>
+            <span class="column-count">0</span>
+        </div>
+        <div class="kanban-items"></div>
+    </div>
+
+    <div class="kanban-column" data-status="concluido">
+        <div class="kanban-column-header">
+            <h2>Concluído</h2>
+            <span class="column-count">0</span>
+        </div>
+        <div class="kanban-items"></div>
+    </div>
+
+    <div class="kanban-column" data-status="cancelado">
+        
+        <div class="kanban-column-header">
+            <h2>Cancelado</h2>
+            <span class="column-count">0</span>
+        </div>
+        <div class="kanban-items"></div>
+    </div>
+
+</section>
+
+
+{% endblock %}
+
+{% block scripts %}
+
+<script>
+    const fretes = {{ fretes | tojson }};
+</script>
+
+<script src="{{ url_for('static', filename='js/freight-board.js') }}"></script>
+
+{% endblock %}

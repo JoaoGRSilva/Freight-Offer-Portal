@@ -1,0 +1,141 @@
+/* Extracted from original global.css: components */
+
+.status {
+display: inline-flex;
+    align-items: center;
+    padding: 5px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.status.pending {
+background: #f4f4f4;
+    color: #666;
+}
+
+.status.confirmed {
+background: #e9f5f1;
+    color: #2f7d6d;
+}
+
+.btn {
+border-radius: 7px;
+    padding: 10px 15px;
+    font-size: 12px;
+    font-weight: 600;
+    border: none;
+}
+
+.btn-primary {
+background: #2f7d6d;
+    color: white;
+}
+
+.btn-primary:hover {
+background: #286b5e;
+}
+
+.btn-primary:disabled {
+opacity: 0.7;
+    cursor: default;
+}
+
+.btn:disabled {
+opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-secondary {
+background: #fff;
+    color: #555;
+    border: 1px solid #ddd;
+}
+
+.btn-secondary:hover {
+border-color: #2f7d6d;
+    color: #2f7d6d;
+}
+
+.badge {
+display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    padding: 4px 12px 4px 9px;
+    border-radius: 999px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.badge::before {
+content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+}
+
+.badge.alta {
+background: #e8f7f0;
+    color: #22c55e;
+}
+
+.badge.alta::before {
+background: #22c55e;
+}
+
+.badge.media {
+background: #fef3e2;
+    color: #d97706;
+}
+
+.badge.media::before {
+background: #d97706;
+}
+
+.badge.sem-dado {
+background: #fdecec;
+    color: #ef4444;
+}
+
+.badge.sem-dado::before {
+background: #ef4444;
+}
+
+@media (max-width: 650px) {
+.btn {
+width: 100%;
+}
+}
+
+.header-user {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.header-user-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.header-user-info strong {
+    font-size: 13px;
+}
+
+.header-user-info small {
+    font-size: 11px;
+    opacity: .7;
+}
+
+.logout-btn {
+    background: transparent;
+    border: 1px solid currentColor;
+    color: inherit;
+    border-radius: 7px;
+    padding: 7px 12px;
+    cursor: pointer;
+    font-family: inherit;
+}

@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/admin.css') }}">{% endblock %}
+{% block content %}<section class="admin-ui">
+<header class="admin-heading"><div><small>ADMINISTRAÇÃO / ACESSOS</small><h1>Usuários e acessos</h1><p>Gerencie perfis e permissões por planta.</p></div><div class="admin-actions"><a href="{{ url_for('admin.index') }}">Voltar</a><a class="admin-primary" href="{{ url_for('admin.users', new=1) }}#editor">+ Novo usuário</a></div></header>
+{% for msg in get_flashed_messages() %}<p role="status">{{ msg }}</p>{% endfor %}
+<div class="admin-panel admin-table"><table><thead><tr><th>Nome</th><th>E-mail</th><th>Perfil</th><th>Plantas</th><th>Status</th><th></th></tr></thead><tbody>
+{% for u in users %}<tr><td>{{ u.name }}</td><td>{{ u.email }}</td><td>{{ 'Admin' if u.is_admin else ('Transportadora' if u.role=='carrier' else 'Operador') }}</td><td>{{ 'Todas' if u.is_admin else ('—' if u.role == 'carrier' else (u.plants|join(', ') or 'Sem vínculo')) }}</td><td><span class="admin-status {{ 'is-active' if u.active else 'is-inactive' }}">{{ 'Ativo' if u.active else 'Inativo' }}</span></td><td><a href="{{ url_for('admin.users',edit=u.id) }}#editor">Editar</a></td></tr>{% endfor %}</tbody></table></div>
+{% if selected or request.args.get('new') == '1' %}
+<div class="admin-panel admin-editor" id="editor"><h2>{{ 'Editar usuário' if selected else 'Novo usuário' }}</h2>
+<form method="post" class="admin-form">
+<input type="hidden" name="csrf_token" value="{{ auth_csrf_token() }}"><input type="hidden" name="user_id" value="{{ selected.id if selected else '' }}">
+<label>Nome <input name="name" required value="{{ selected.name if selected else '' }}"></label>
+<label>E-mail <input name="email" type="email" required value="{{ selected.email if selected else '' }}"></label>
+<label>Senha (12 caracteres; deixe em branco para manter) <input name="password" type="password" minlength="12" {% if not selected %}required{% endif %}></label>
+{% set profile = 'admin' if selected and selected.is_admin else ('carrier' if selected and selected.role=='carrier' else 'operator') %}
+<label>Perfil <select name="profile" id="admin-profile">{% for key,label in [('operator','Operador'),('admin','Administrador'),('carrier','Transportadora')] %}<option value="{{ key }}" {% if profile==key %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+<label id="admin-carrier">Transportadora (somente perfil externo) <input name="carrier" value="{{ selected.carrier_name or '' if selected else '' }}"></label>
+<fieldset class="admin-plants" id="admin-plants"><legend>Plantas (somente operadores)</legend>{% for p in plants %}<label><input type="checkbox" name="plants" value="{{ p.code }}" {% if selected and p.code in selected.plants %}checked{% endif %}> {{ p.code }} — {{ p.name }}{% if p.validation_status != 'VALIDADO' %} (pendente){% elif not p.active %} (inativa){% endif %}</label>{% endfor %}</fieldset><p id="admin-plant-count" class="admin-form-note" aria-live="polite"></p><p id="admin-global" class="admin-form-note">Administrador: acesso a todas as plantas, Dashboard e Administração.</p>
+<label><input type="checkbox" name="active" {% if not selected or selected.active %}checked{% endif %}> Ativo</label><button type="submit">Salvar alterações</button><a href="{{ url_for('admin.users') }}">Cancelar</a></form></div>{% endif %}</section>
+{% endblock %}
+
+{% block scripts %}<script src="{{ url_for('static', filename='js/admin.js') }}" defer></script>{% endblock %}

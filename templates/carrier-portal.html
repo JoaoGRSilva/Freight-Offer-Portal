@@ -1,0 +1,862 @@
+
+{% extends "base.html" %}
+
+{% block title %}
+Oferta de Fretes | Digital Freight Offering Portal
+{% endblock %}
+
+{% block styles %}
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/pages/carrier-portal.css') }}"
+>
+{% endblock %}
+
+{% block content %}
+
+<!-- =========================================
+     CABEÇALHO
+========================================= -->
+
+<section class="page-header">
+    <div class="kicker">Inteligência de transporte</div>
+
+    <h1>Oferta de Fretes</h1>
+
+    <p>
+        Consulte as cargas disponíveis para transporte.
+    </p>
+</section>
+
+
+<!-- =========================================
+     LISTA DE OFERTAS
+========================================= -->
+
+<section class="ofertas">
+
+    <div class="ofertas-cabecalho">
+
+        <div>
+            <h2>Fretes disponíveis</h2>
+
+            <p>
+                Confira as oportunidades abertas para negociação.
+            </p>
+        </div>
+
+        <span class="ofertas-contador">
+            {{ cargas | length }} frete(s) disponível(is)
+        </span>
+
+    </div>
+
+
+    <div class="ofertas-lista">
+
+        {% for carga in cargas %}
+
+            <!-- =========================================
+                 NORMALIZAÇÃO DOS DADOS
+            ========================================= -->
+
+            {% set planta = carga.get('planta') or {} %}
+
+            {% set destino = carga.get('destino') %}
+
+            {% set nome_destino = (
+                destino.get('cidade') or destino.get('nome') or '—'
+            ) if destino is mapping else (destino or '—') %}
+
+            {% set origem = (
+                carga.get('origem')
+                or planta.get('cidade')
+                or '—'
+            ) %}
+
+            {% set tipo_carga = carga.get('tipo_carga') or 'batida' %}
+
+            {% set valor_inicial = carga.get('valor_inicial_negociacao') %}
+
+            {% set comentarios = carga.get('comentarios_carga') or '' %}
+
+            {% set stops = carga.get('stops') or [] %}
+
+            {% set transfer = carga.get('transfer_planta') %}
+
+            {% set destino_final = carga.get('destino_final') %}
+
+            {% set tipo_rota = carga.get('tipo') or 'Direta' %}
+
+            {% set tem_transbordo = (
+                transfer is not none
+                and transfer != ''
+                and transfer != {}
+            ) %}
+
+            {% set nome_transfer = (
+                transfer.get('cidade')
+                or transfer.get('nome')
+                or transfer.get('codigo')
+                or 'Não informado'
+            ) if transfer is mapping else (transfer or 'Não informado') %}
+
+            {% set nome_final = (
+                destino_final.get('cidade')
+                or destino_final.get('nome')
+                or 'Não informado'
+            ) if destino_final is mapping else (destino_final or 'Não informado') %}
+
+            {% set frete_id = (
+                carga.get('db_id')
+                or carga.get('id')
+                or loop.index
+            ) %}
+
+            {% set numero_frete = carga.get('num') or frete_id %}
+
+
+            <!-- =========================================
+                 CARD DO FRETE
+            ========================================= -->
+
+            <article class="oferta-card">
+
+                <!-- TOPO -->
+
+                <div class="oferta-topo">
+
+                    <div class="oferta-identificacao">
+
+                        <div class="oferta-codigo">
+                            FRETE {{ numero_frete }}
+                        </div>
+
+                        <h3 class="oferta-rota">
+
+                            <span>{{ origem }}</span>
+
+                            <span class="oferta-seta">→</span>
+
+                            <span>{{ nome_destino }}</span>
+
+                        </h3>
+
+                        <div class="oferta-pedidos">
+                            <span>
+                                {{ 'Operação com transbordo' if tem_transbordo else tipo_rota }}
+                            </span>
+                        </div>
+
+                    </div>
+
+                    <span class="oferta-status">
+                        <span class="oferta-status-ponto"></span>
+                        Disponível
+                    </span>
+
+                </div>
+
+
+                <!-- =========================================
+                     INFORMAÇÕES OPERACIONAIS
+                ========================================= -->
+
+                <div class="oferta-dados">
+
+                    <div class="oferta-dado">
+
+                        <span class="oferta-label">
+                            DATA DE CARGA
+                        </span>
+
+                        <strong>
+                            {{ carga.get('data_carga') or '—' }}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="oferta-dado">
+
+                        <span class="oferta-label">
+                            PESO OPERACIONAL
+                        </span>
+
+                        <strong>
+                            {% if carga.get('peso_kg') is not none %}
+                                {{ '{:,.0f}'.format(carga.get('peso_kg') | float).replace(',', '.') }} kg
+                            {% else %}
+                                —
+                            {% endif %}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="oferta-dado">
+
+                        <span class="oferta-label">
+                            TIPO DE CARGA
+                        </span>
+
+                        <strong>
+                            {{ 'Paletizada' if tipo_carga == 'paletizada' else 'Batida' }}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="oferta-dado oferta-dado-valor">
+
+                        <span class="oferta-label">
+                            VALOR INICIAL
+                        </span>
+
+                        <strong>
+                            {% if valor_inicial is not none and valor_inicial != '' %}
+
+                                R$ {{ '{:,.2f}'.format(valor_inicial | float).replace(',', 'X').replace('.', ',').replace('X', '.') }}
+
+                            {% else %}
+
+                                A negociar
+
+                            {% endif %}
+                        </strong>
+
+                    </div>
+
+                </div>
+
+                
+
+                <!-- =========================================
+                    WEATHER — DESTINATION
+                ========================================= -->
+
+                {% set weather_data = carga.get('clima') %}
+
+                {% if weather_data %}
+                <div class="oferta-clima">
+
+                    <div class="oferta-clima-principal">
+
+                        {% if weather_data.get('icon') %}
+                        <div class="oferta-clima-icone">
+                            <img
+                                src="{{ weather_data.get('icon') }}"
+                                alt="{{ weather_data.get('condition', 'Clima') }}"
+                                width="48"
+                                height="48"
+                                loading="lazy"
+                            >
+                        </div>
+                        {% endif %}
+
+                        <div class="oferta-clima-conteudo">
+
+                            <span class="oferta-clima-label">
+                                CLIMA NO DESTINO · {{ nome_destino }}
+                            </span>
+
+                            <div class="oferta-clima-resumo">
+                                <strong>
+                                    {{ weather_data.get('temperature_c') }}°C
+                                </strong>
+
+                                <span>
+                                    {{ weather_data.get('condition', '—') }}
+                                </span>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="oferta-clima-metricas">
+
+                        <span>
+                            <span class="oferta-clima-simbolo">💧</span>
+                            {{ weather_data.get('humidity', '—') }}%
+                        </span>
+
+                        <span>
+                            <span class="oferta-clima-simbolo">↝</span>
+                            {{ weather_data.get('wind_kph', '—') }} km/h
+                        </span>
+
+                    </div>
+
+                </div>
+                {% endif %}
+
+
+
+
+                <!-- =========================================
+                     OPERAÇÃO COM TRANSBORDO
+                ========================================= -->
+
+                {% if tem_transbordo %}
+
+                <div class="oferta-transbordo">
+
+                    <div class="oferta-transbordo-cabecalho">
+
+                        <span class="oferta-transbordo-etiqueta">
+                            OPERAÇÃO COM TRANSBORDO
+                        </span>
+
+                        <strong>
+                            Verifique o trecho ofertado
+                        </strong>
+
+                    </div>
+
+
+                    <div class="oferta-transbordo-rota">
+
+                        <div class="oferta-transbordo-ponto">
+
+                            <small>ORIGEM</small>
+
+                            <strong>
+                                {{ origem }}
+                            </strong>
+
+                        </div>
+
+
+                        <span class="oferta-transbordo-seta">
+                            →
+                        </span>
+
+
+                        <div class="oferta-transbordo-ponto destaque">
+
+                            <small>PONTO DE TRANSBORDO</small>
+
+                            <strong>
+                                {{ nome_transfer }}
+                            </strong>
+
+                        </div>
+
+
+                        {% if destino_final and nome_final != 'Não informado' %}
+
+                            <span class="oferta-transbordo-seta">
+                                →
+                            </span>
+
+                            <div class="oferta-transbordo-ponto">
+
+                                <small>
+                                    DESTINO FINAL DA OPERAÇÃO
+                                </small>
+
+                                <strong>
+                                    {{ nome_final }}
+                                </strong>
+
+                            </div>
+
+                        {% endif %}
+
+                    </div>
+
+
+                    <p class="oferta-transbordo-aviso">
+                        Esta oferta corresponde ao trecho indicado no frete.
+                        O transporte complementar após o transbordo pode
+                        ser contratado separadamente.
+                    </p>
+
+                </div>
+
+                {% endif %}
+
+
+                <!-- =========================================
+                     OBSERVAÇÕES DA CARGA
+                ========================================= -->
+
+                {% if comentarios %}
+
+                <div class="oferta-observacoes">
+
+                    <div class="oferta-observacoes-titulo">
+                        INSTRUÇÕES DA CARGA
+                    </div>
+
+                    <p>
+                        {{ comentarios }}
+                    </p>
+
+                </div>
+
+                {% endif %}
+
+
+                <!-- =========================================
+                     RODAPÉ E AÇÕES
+                ========================================= -->
+
+                <div class="oferta-rodape">
+
+                    <div class="oferta-tags">
+
+                        <span class="oferta-tag">
+                            {{ tipo_rota }}
+                        </span>
+
+                        {% if tem_transbordo %}
+
+                            <span class="oferta-tag oferta-tag-transfer">
+                                Transbordo
+                            </span>
+
+                        {% elif stops | length > 2 %}
+
+
+
+                        {% endif %}
+
+                    </div>
+
+
+                    <div class="oferta-acoes">
+
+                        <button
+                            type="button"
+                            class="oferta-btn oferta-btn-secundario"
+                            onclick="alternarDetalhes('detalhes-{{ frete_id }}', this)"
+                            aria-expanded="false"
+                        >
+                            Ver detalhes
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="oferta-btn oferta-btn-primario btn-manifestar" disabled title="Envio de propostas em implantação"
+                            data-frete-id="{{ frete_id }}"
+                            data-frete-numero="{{ numero_frete }}"
+                        >
+                            Manifestar interesse
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =========================================
+                     DETALHES EXPANSÍVEIS
+                ========================================= -->
+
+                <div
+                    class="oferta-detalhes"
+                    id="detalhes-{{ frete_id }}"
+                    hidden
+                >
+
+                    <h4>
+                        Detalhes da carga
+                    </h4>
+
+
+                    <div class="oferta-detalhes-grid">
+
+                        <div>
+
+                            <span class="oferta-label">
+                                TIPO DE ROTA
+                            </span>
+
+                            <strong>
+                                {{ tipo_rota }}
+                            </strong>
+
+                        </div>
+
+
+                        <div>
+
+                            <span class="oferta-label">
+                                PESO LÍQUIDO
+                            </span>
+
+                            <strong>
+
+                                {% if carga.get('peso_liquido_kg') is not none %}
+
+                                    {{ carga.get('peso_liquido_kg') }} kg
+
+                                {% else %}
+
+                                    Não informado
+
+                                {% endif %}
+
+                            </strong>
+
+                        </div>
+
+
+                        <div>
+
+                            <span class="oferta-label">
+                                PLANTA DE ORIGEM
+                            </span>
+
+                            <strong>
+                                {{ planta.get('nome') or origem }}
+                            </strong>
+
+                        </div>
+
+
+                        <div>
+
+                            <span class="oferta-label">
+                                DESTINO DO FRETE
+                            </span>
+
+                            <strong>
+                                {{ nome_destino }}
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- PARADAS -->
+
+                    {% if stops %}
+
+                    <div class="oferta-rota-detalhada">
+
+                        <span class="oferta-label">
+                            ROTA / PARADAS
+                        </span>
+
+                        <div class="oferta-paradas">
+
+                            {% for parada in stops %}
+
+                                <span class="oferta-parada">
+
+                                    {% if parada is mapping %}
+
+                                        {{ parada.get('cidade') or parada.get('nome') or '—' }}
+
+                                    {% else %}
+
+                                        {{ parada }}
+
+                                    {% endif %}
+
+                                </span>
+
+                                {% if not loop.last %}
+
+                                    <span class="oferta-parada-seta">
+                                        →
+                                    </span>
+
+                                {% endif %}
+
+                            {% endfor %}
+
+                        </div>
+
+                    </div>
+
+                    {% endif %}
+
+
+                    <!-- TRANSBORDO -->
+
+                    {% if tem_transbordo %}
+
+                    <div class="oferta-transferencia">
+
+                        <strong>
+                            Ponto de transbordo:
+                        </strong>
+
+                        {{ nome_transfer }}
+
+                    </div>
+
+                    {% endif %}
+
+
+                    <!-- OBSERVAÇÕES -->
+
+                    {% if comentarios %}
+
+                    <div class="oferta-detalhes-observacoes">
+
+                        <strong>
+                            Observações operacionais:
+                        </strong>
+
+                        <p>
+                            {{ comentarios }}
+                        </p>
+
+                    </div>
+
+                    {% endif %}
+
+                </div>
+
+            </article>
+
+
+        {% else %}
+
+            <!-- =========================================
+                 NENHUMA OFERTA
+            ========================================= -->
+
+            <div class="oferta-vazio">
+
+                <div class="oferta-vazio-icone">
+                    ◈
+                </div>
+
+                <h3>
+                    Nenhum frete disponível
+                </h3>
+
+                <p>
+                    Quando uma carga for publicada em Nova Carga,
+                    ela aparecerá automaticamente aqui.
+                </p>
+
+            </div>
+
+        {% endfor %}
+
+    </div>
+
+</section>
+
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<script>
+
+/* =========================================
+   DETALHES DO FRETE
+========================================= */
+
+function alternarDetalhes(id, botao) {
+    const detalhes = document.getElementById(id);
+
+    if (!detalhes) {
+        return;
+    }
+
+    const abrir = detalhes.hidden;
+
+    detalhes.hidden = !abrir;
+
+    botao.textContent = abrir
+        ? "Ocultar detalhes"
+        : "Ver detalhes";
+
+    botao.setAttribute(
+        "aria-expanded",
+        String(abrir)
+    );
+}
+
+
+/* =========================================
+   ABRIR MODAL DE PROPOSTA
+========================================= */
+
+function abrirModalProposta(freteId, numeroFrete) {
+    const modal = document.getElementById("modal-proposta");
+    const seletor = document.getElementById("transportadora-teste");
+
+    if (!modal) {
+        console.error("Modal de proposta não encontrado no HTML.");
+        alert("Erro: modal de proposta não encontrado.");
+        return;
+    }
+
+    if (!seletor) {
+        console.error("Seletor de transportadoras não encontrado.");
+        alert("Erro: seletor de transportadoras não encontrado.");
+        return;
+    }
+
+    if (!seletor.value) {
+        alert("Selecione uma transportadora antes de manifestar interesse.");
+        seletor.focus();
+        return;
+    }
+
+    const formulario = document.getElementById("form-proposta");
+
+    formulario.reset();
+
+    document.getElementById("proposta-frete-id").value = freteId;
+    document.getElementById("proposta-frete-label").textContent =
+        `Frete ${numeroFrete}`;
+
+    document.getElementById("proposta-transportadora").value =
+        seletor.value;
+
+    document.getElementById("proposta-mensagem").textContent = "";
+    document.getElementById("proposta-prazo").value = "1";
+
+    modal.hidden = false;
+
+    document.getElementById("proposta-valor").focus();
+}
+
+
+/* =========================================
+   CLIQUE NO BOTÃO MANIFESTAR INTERESSE
+========================================= */
+
+document.querySelectorAll(".btn-manifestar").forEach(botao => {
+    botao.addEventListener("click", function () {
+        const freteId = this.dataset.freteId;
+        const numeroFrete = this.dataset.freteNumero;
+
+        abrirModalProposta(freteId, numeroFrete);
+    });
+});
+
+
+/* =========================================
+   FECHAR MODAL
+========================================= */
+
+function fecharModalProposta() {
+    const modal = document.getElementById(
+        "modal-proposta"
+    );
+
+    if (modal) {
+        modal.hidden = true;
+    }
+}
+
+
+/* =========================================
+   ENVIAR PROPOSTA
+========================================= */
+
+document.getElementById("form-proposta")?.addEventListener(
+    "submit",
+    async function (event) {
+        event.preventDefault();
+
+        const freteId = document.getElementById(
+            "proposta-frete-id"
+        ).value;
+
+        const botao = document.getElementById(
+            "proposta-enviar"
+        );
+
+        const mensagem = document.getElementById(
+            "proposta-mensagem"
+        );
+
+        const dados = {
+            transportadora: document.getElementById(
+                "proposta-transportadora"
+            ).value,
+
+            valor: document.getElementById(
+                "proposta-valor"
+            ).value,
+
+            prazo_dias: document.getElementById(
+                "proposta-prazo"
+            ).value,
+
+            observacoes: document.getElementById(
+                "proposta-observacoes"
+            ).value
+        };
+
+        botao.disabled = true;
+        botao.textContent = "Enviando...";
+
+        mensagem.textContent = "";
+
+        try {
+            const resposta = await fetch(
+                `/api/ofertas/${freteId}/propostas`,
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+
+                    body: JSON.stringify(dados)
+                }
+            );
+
+            const resultado = await resposta.json();
+
+            if (!resposta.ok || !resultado.ok) {
+                throw new Error(
+                    resultado.erro ||
+                    "Não foi possível enviar a proposta."
+                );
+            }
+
+            mensagem.textContent = resultado.mensagem;
+            mensagem.style.color = "#24765b";
+
+            botao.textContent = "Proposta enviada";
+
+            setTimeout(() => {
+                fecharModalProposta();
+            }, 1200);
+
+        } catch (erro) {
+            mensagem.textContent = erro.message;
+            mensagem.style.color = "#b42318";
+
+        } finally {
+            botao.disabled = false;
+
+            if (botao.textContent !== "Proposta enviada") {
+                botao.textContent = "Enviar proposta";
+            }
+        }
+    }
+);
+
+
+/* =========================================
+   FECHAR MODAL COM ESC
+========================================= */
+
+document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape") {
+        fecharModalProposta();
+    }
+});
+
+</script>
+
+{% endblock %}

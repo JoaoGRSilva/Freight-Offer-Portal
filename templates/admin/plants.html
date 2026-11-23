@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/admin.css') }}">{% endblock %}
+{% block content %}<section class="admin-ui">
+<header class="admin-heading"><div><small>ADMINISTRAÇÃO / CADASTROS</small><h1>Plantas</h1><p>Cadastre e valide as plantas usadas no cálculo de distância e custo.</p></div><div class="admin-actions"><a href="{{ url_for('admin.index') }}">Voltar</a><a class="admin-primary" href="{{ url_for('admin.plants', new=1) }}#editor">+ Nova planta</a></div></header>
+{% for msg in get_flashed_messages() %}<p role="status">{{ msg }}</p>{% endfor %}
+<div class="admin-summary"><span>{{ summary.total }} plantas</span><span>{{ summary.validated }} validadas</span><span class="{{ 'is-warn' if summary.pending }}">{{ summary.pending }} pendentes de validação</span><span>{{ summary.inactive }} inativas</span></div>
+<div class="admin-panel admin-table"><table><thead><tr><th>Código</th><th>Nome</th><th>CEP</th><th>Cidade / UF</th><th>Status</th><th></th></tr></thead><tbody>
+{% for p in plants %}<tr>
+<td><strong>{{ p.code }}</strong></td>
+<td>{{ p.name }}{% if p.validation_status != 'VALIDADO' and p.notes %}<div class="admin-note">{{ p.notes }}</div>{% endif %}</td>
+<td>{{ p.zip_code or '—' }}</td>
+<td>{% if p.city or p.state %}{{ p.city or '—' }} / {{ p.state or '—' }}{% else %}—{% endif %}</td>
+<td>{% if p.validation_status == 'VALIDADO' %}<span class="admin-status is-active">Validada</span>{% else %}<span class="admin-status is-pending">Pendente</span>{% endif %} {% if not p.active %}<span class="admin-status is-inactive">Inativa</span>{% endif %}</td>
+<td class="admin-row-actions"><a href="{{ url_for('admin.plants', edit=p.code) }}#editor">Editar</a>
+<form method="post" action="{{ url_for('admin.toggle_plant', code=p.code) }}" class="admin-inline-form"><input type="hidden" name="csrf_token" value="{{ auth_csrf_token() }}"><input type="hidden" name="active" value="{{ '0' if p.active else '1' }}"><button type="submit" class="admin-link-btn">{{ 'Inativar' if p.active else 'Ativar' }}</button></form></td>
+</tr>{% else %}<tr><td colspan="6">Nenhuma planta cadastrada.</td></tr>{% endfor %}</tbody></table></div>
+{% if selected %}
+<div class="admin-panel admin-editor" id="editor"><h2>{{ 'Editar planta ' ~ selected.code if editing else 'Nova planta' }}</h2>
+{% if error %}<p class="admin-error" role="alert">{{ error }}</p>{% endif %}
+<form method="post" class="admin-form" action="{{ url_for('admin.plants') }}">
+<input type="hidden" name="csrf_token" value="{{ auth_csrf_token() }}"><input type="hidden" name="editing" value="{{ '1' if editing else '0' }}">
+<label>Código (4 dígitos) <input name="code" required pattern="[0-9]{4}" maxlength="4" inputmode="numeric" value="{{ selected.code or '' }}" {% if editing %}readonly{% endif %}></label>
+<label>Nome <input name="name" required value="{{ selected.name or '' }}"></label>
+<label>CEP <input name="zip_code" placeholder="00000-000" inputmode="numeric" value="{{ selected.zip_code or '' }}"></label>
+<label>Cidade <input name="city" value="{{ selected.city or '' }}"></label>
+<label>UF <select name="state"><option value="">—</option>{% for uf in ufs %}<option value="{{ uf }}" {% if selected.state == uf %}selected{% endif %}>{{ uf }}</option>{% endfor %}</select></label>
+<label>Validação <select name="validation_status">{% for s in statuses %}<option value="{{ s }}" {% if selected.validation_status == s %}selected{% endif %}>{{ 'Validada' if s == 'VALIDADO' else 'Pendente de validação' }}</option>{% endfor %}</select></label>
+<label class="admin-wide">Observações <textarea name="notes" rows="3" maxlength="1000">{{ selected.notes or '' }}</textarea></label>
+<label><input type="checkbox" name="active" {% if selected.active %}checked{% endif %}> Ativa</label>
+<p class="admin-form-note">Só plantas <strong>ativas e validadas</strong>, com CEP, cidade e UF, entram nos cálculos de distância e custo.</p>
+<button type="submit">Salvar planta</button><a href="{{ url_for('admin.plants') }}">Cancelar</a></form></div>
+{% endif %}</section>
+{% endblock %}

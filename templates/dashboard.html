@@ -1,0 +1,307 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/dashboard.css') }}">
+
+{% endblock %}
+
+{% block title %}
+
+Dashboard | Digital Freight Offering Portal
+
+{% endblock %}
+
+{% block content %}
+
+<!-- =========================================
+
+     CABEÇALHO
+
+========================================= -->
+
+<section class="page-header">
+
+    <div class="kicker">
+
+        Inteligência operacional
+
+    </div>
+
+    <h1>Dashboard</h1>
+
+</section>
+
+<!-- =========================================
+
+     INDICADORES PRINCIPAIS
+
+========================================= -->
+
+<section class="indicadores">
+
+    <div class="kpi">
+
+        <h2>
+
+            {{ kpis.fretes }}
+
+        </h2>
+
+        <p>
+
+            Fretes
+
+        </p>
+
+    </div>
+
+    <div class="kpi">
+
+        <h2>
+
+            {{ kpis.valor_negociado }}
+
+        </h2>
+
+        <p>
+
+            Valor negociado
+
+        </p>
+
+    </div>
+
+    <div class="kpi">
+
+        <h2 class="{% if kpis.savings_positivo %}positivo{% else %}negativo{% endif %}">
+
+            {% if kpis.savings_positivo %}
+
+                ▼
+
+            {% else %}
+
+                ▲
+
+            {% endif %}
+
+            {{ kpis.savings }}
+
+        </h2>
+
+        <p>
+
+            Savings
+
+        </p>
+
+    </div>
+
+    <div class="kpi">
+
+        <h2>
+
+            {{ kpis.sla_medio }}
+
+        </h2>
+
+        <p>
+
+            SLA
+
+        </p>
+
+    </div>
+
+</section>
+
+<!-- =========================================
+
+     EVOLUÇÃO MENSAL
+
+========================================= -->
+
+<section class="grafico">
+
+    <h2>
+
+        Evolução mensal
+
+    </h2>
+
+    <div class="grafico-container">
+
+        <canvas id="evolucaoMensal"></canvas>
+
+    </div>
+
+</section>
+
+<!-- =========================================
+
+     INDICADORES OPERACIONAIS
+
+========================================= -->
+
+<section class="blocos-kpi">
+
+    <!-- =====================================
+
+         DESEMPENHO DAS TRANSPORTADORAS
+
+    ===================================== -->
+
+    <div class="bloco-kpi">
+
+        <h2>
+
+            Desempenho das Transportadoras
+
+        </h2>
+
+        <div class="kpi-transportadoras">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>Transportadora</th>
+
+                        <th>Valor negociado</th>
+
+                        <th>Fretes</th>
+
+                        <th>SLA</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    {% for transportadora in top_transportadoras.itertuples() %}
+
+                    <tr>
+
+                        <td>
+
+                            {{ transportadora.Index }}
+
+                        </td>
+
+                        <td>
+
+                            {{ "R$ {:,.0f}".format(
+
+                                transportadora.negotiated_value
+
+                            ).replace(",", ".") }}
+
+                        </td>
+
+                        <td>
+
+                            {{ transportadora.freight_count }}
+
+                        </td>
+
+                        <td>
+
+                            {{ "%.0f"|format(
+
+                                transportadora.sla * 100
+
+                            ) }}%
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+    <!-- =====================================
+
+         PERFORMANCE REGIONAL
+
+    ===================================== -->
+
+    <div class="bloco-kpi">
+
+        <h2>
+
+            Performance Regional
+
+        </h2>
+
+        <div class="mapa-container">
+
+            <div id="mapaBrasil" data-geojson-url="{{ url_for('static', filename='geojson/estados.geojson') }}"></div>
+
+        </div>
+
+    </div>
+
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+
+<!-- =========================================
+
+     BIBLIOTECAS
+
+========================================= -->
+
+<script src="https\://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script src="https\://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- =========================================
+
+     DADOS DO FLASK
+
+========================================= -->
+
+<script id="dadosEvolucao" type="application/json">
+
+    {{ evolucao.to_dict(orient="records") | tojson }}
+
+</script>
+
+<script id="dadosEstados" type="application/json">
+
+    {{ performance_estado.to_dict(orient="records") | tojson }}
+
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<link rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+
+<!-- =========================================
+
+     JAVASCRIPT
+
+========================================= -->
+
+<script src="{{ url_for('static', filename='js/dashboard.js') }}" defer></script>
+
+{% endblock %}
