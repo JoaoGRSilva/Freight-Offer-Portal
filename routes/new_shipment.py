@@ -493,11 +493,33 @@ def nova_proposta(frete_id):
     methods=["POST"],
 )
 def aceitar_cotacao(frete_id, proposta_id):
+    ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
+
     try:
         aceitar_proposta(frete_id, proposta_id)
-        flash("Proposta aceita. Aguardando confirmação SAP.")
+        mensagem = "Proposta aceita. Aguardando confirmação SAP."
+
+        if ajax:
+            return jsonify({"sucesso": True, "mensagem": mensagem})
+
+        flash(mensagem)
+
     except ValueError as erro:
-        flash(str(erro))
+        mensagem = str(erro)
+        if ajax:
+            return jsonify({"sucesso": False, "mensagem": mensagem}), 400
+        flash(mensagem)
+
+    except Exception:
+        log.exception(
+            "Erro ao aceitar proposta %s do frete %s",
+            proposta_id,
+            frete_id,
+        )
+        mensagem = "Erro interno ao aceitar a proposta."
+        if ajax:
+            return jsonify({"sucesso": False, "mensagem": mensagem}), 500
+        flash(mensagem)
 
     return redirect(url_for("nova-carga.nova_carga"))
 
@@ -507,6 +529,7 @@ def aceitar_cotacao(frete_id, proposta_id):
     methods=["POST"],
 )
 def confirmar_frete_sap(frete_id):
+    ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
     referencia = request.form.get("referencia_sap", "").strip()
 
     try:
@@ -514,13 +537,28 @@ def confirmar_frete_sap(frete_id):
             raise ValueError("Informe a referência SAP")
 
         confirmar_sap(frete_id, referencia)
-
-        flash(
+        mensagem = (
             "Contratação confirmada no SAP. "
             "Status atualizado para Cotação aceita."
         )
+
+        if ajax:
+            return jsonify({"sucesso": True, "mensagem": mensagem})
+
+        flash(mensagem)
+
     except ValueError as erro:
-        flash(str(erro))
+        mensagem = str(erro)
+        if ajax:
+            return jsonify({"sucesso": False, "mensagem": mensagem}), 400
+        flash(mensagem)
+
+    except Exception:
+        log.exception("Erro ao confirmar contratação SAP do frete %s", frete_id)
+        mensagem = "Erro interno ao confirmar a contratação no SAP."
+        if ajax:
+            return jsonify({"sucesso": False, "mensagem": mensagem}), 500
+        flash(mensagem)
 
     return redirect(url_for("nova-carga.nova_carga"))
 
