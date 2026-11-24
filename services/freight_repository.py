@@ -473,15 +473,6 @@ def registrar_proposta(
     prazo_dias=None,
     observacoes="",
 ):
-    """
-    Registra uma proposta no SQLite.
-
-    Permite propostas em:
-    - em_oferta: propostas recebidas pelo portal;
-    - negociacao: propostas negociadas pela equipe.
-
-    Registrar uma proposta não altera o status do frete.
-    """
     transportadora = str(transportadora or "").strip()
 
     if not transportadora:
@@ -493,7 +484,7 @@ def registrar_proposta(
         raise ValueError("Valor da proposta inválido.")
 
     if not math.isfinite(valor) or valor <= 0:
-        raise ValueError("O valor da proposta deve ser positivo.")
+        raise ValueError("O valor deve ser positivo.")
 
     if prazo_dias is not None:
         try:
@@ -507,84 +498,391 @@ def registrar_proposta(
     observacoes = str(observacoes or "").strip()
 
     with connect("fretes") as conn:
-        frete = conn.execute(
-            """
+
+        frete = conn.execute("""
             SELECT status
             FROM fretes
             WHERE id = ?
-            """,
-            (frete_id,),
-        ).fetchone()
+        """, (frete_id,)).fetchone()
 
         if frete is None:
             raise ValueError("Frete não encontrado.")
 
         if frete["status"] not in ("em_oferta", "negociacao"):
             raise ValueError(
-                "Este frete não está disponível para receber propostas."
+                "Este frete não está disponível para propostas."
             )
 
-        cursor = conn.execute(
-            """
+        # Impede uma segunda negociação da mesma transportadora
+        existente = conn.execute("""
+            SELECT id
+            FROM fretes_propostas
+            WHERE frete_id = ?
+              AND transportadora = ? COLLATE NOCASE
+        """, (frete_id, transportadora)).fetchone()
+
+        if existente:
+            raise ValueError(
+                "Esta transportadora já possui uma negociação neste frete."
+            )
+
+        cursor = conn.execute("""
             INSERT INTO fretes_propostas (
                 frete_id,
                 transportadora,
                 valor,
                 prazo_dias,
-                observacoes
+                observacoes,
+                status_negociacao,
+                atualizado_em
             )
-            VALUES (?, ?, ?, ?, ?)
-            """,
-            (
-                frete_id,
-                transportadora,
+            VALUES (?, ?, ?, ?, ?, 'aguardando_operador', CURRENT_TIMESTAMP)
+        """, (
+            frete_id,
+            transportadora,
+            valor,
+            prazo_dias,
+            observacoes,
+        ))
+
+        proposta_id = cursor.lastrowid
+        conn.execute("""
+            INSERT INTO fretes_negociacao_historico (
+                proposta_id,
+                autor,
+                tipo,
                 valor,
                 prazo_dias,
-                observacoes,
-            ),
-        )
+                observacoes
+            )
+            VALUES (?, 'transportadora', 'proposta_inicial', ?, ?, ?)
+        """, (
+            proposta_id,
+            valor,
+            prazo_dias,
+            observacoes,
+        ))
 
-        return cursor.lastrowid
+        # Registrar a transportadora como participante
+        conn.execute("""
+            INSERT OR IGNORE INTO fretes_transportadoras_negociacao (
+                frete_id,
+                transportadora
+            )
+            VALUES (?, ?)
+        """, (frete_id, transportadora))
+
+        return proposta_id
 
 
 def aceitar_proposta(frete_id, proposta_id):
-    with connect("fretes") as conn:
-        frete = conn.execute(
-            "SELECT status FROM fretes WHERE id = ?",
-            (frete_id,),
-        ).fetchone()
 
-        if frete is None or frete["status"] != "negociacao":
-            raise ValueError("Frete não está em negociação")
+    with connect("fretes") as conn:
+
+        frete = conn.execute("""
+            SELECT status
+            FROM fretes
+            WHERE id = ?
+        """, (frete_id,)).fetchone()
+
+        if frete is None:
+            raise ValueError("Frete não encontrado.")
+
+        if frete["status"] != "negociacao":
+            raise ValueError(
+                "Frete não está em negociação."
+            )
 
         proposta = conn.execute("""
-            SELECT id, transportadora
+            SELECT *
             FROM fretes_propostas
-            WHERE id = ? AND frete_id = ?
+            WHERE id = ?
+              AND frete_id = ?
         """, (proposta_id, frete_id)).fetchone()
 
         if proposta is None:
-            raise ValueError("Proposta não encontrada")
+            raise ValueError("Proposta não encontrada.")
 
+        if proposta["status_negociacao"] != "aguardando_operador":
+            raise ValueError(
+                "Esta negociação não está aguardando ação do operador."
+            )
+
+        # Desmarcar outras propostas aceitas
         conn.execute("""
             UPDATE fretes_propostas
             SET aceita = 0
             WHERE frete_id = ?
         """, (frete_id,))
 
+        # Aceitar proposta selecionada
         conn.execute("""
             UPDATE fretes_propostas
-            SET aceita = 1
+            SET aceita = 1,
+                status_negociacao = 'aceita',
+                atualizado_em = CURRENT_TIMESTAMP
             WHERE id = ?
         """, (proposta_id,))
 
+        # Atualizar transportadora escolhida
         conn.execute("""
             UPDATE fretes
             SET transportadora_escolhida = ?,
                 atualizado_em = CURRENT_TIMESTAMP
             WHERE id = ?
-        """, (proposta["transportadora"], frete_id))
+        """, (
+            proposta["transportadora"],
+            frete_id,
+        ))
 
+        # Histórico
+        conn.execute("""
+            INSERT INTO fretes_negociacao_historico (
+                proposta_id,
+                autor,
+                tipo,
+                valor,
+                prazo_dias,
+                observacoes
+            )
+            VALUES (?, 'operador', 'aceite', ?, ?, ?)
+        """, (
+            proposta_id,
+            proposta["valor"],
+            proposta["prazo_dias"],
+            proposta["observacoes"],
+        ))
+def contrapropor(
+    frete_id,
+    proposta_id,
+    valor,
+    prazo_dias=None,
+    observacoes="",
+):
+    try:
+        valor = float(valor)
+    except (TypeError, ValueError, OverflowError):
+        raise ValueError("Valor inválido.")
+
+    if not math.isfinite(valor) or valor <= 0:
+        raise ValueError("O valor deve ser positivo.")
+
+    if prazo_dias is not None:
+        try:
+            prazo_dias = int(prazo_dias)
+        except (TypeError, ValueError, OverflowError):
+            raise ValueError("Prazo inválido.")
+
+        if not 0 <= prazo_dias <= 365:
+            raise ValueError("Prazo deve estar entre 0 e 365 dias.")
+
+    observacoes = str(observacoes or "").strip()
+
+    with connect("fretes") as conn:
+
+        proposta = conn.execute("""
+            SELECT p.*, f.status AS status_frete
+            FROM fretes_propostas p
+            JOIN fretes f ON f.id = p.frete_id
+            WHERE p.id = ?
+              AND p.frete_id = ?
+        """, (proposta_id, frete_id)).fetchone()
+
+        if proposta is None:
+            raise ValueError("Proposta não encontrada.")
+
+        if proposta["status_frete"] != "negociacao":
+            raise ValueError("Frete não está em negociação.")
+
+        if proposta["status_negociacao"] != "aguardando_operador":
+            raise ValueError(
+                "Esta negociação não está aguardando o operador."
+            )
+
+        # Atualizar condição atual da negociação
+        conn.execute("""
+            UPDATE fretes_propostas
+            SET valor = ?,
+                prazo_dias = ?,
+                observacoes = ?,
+                status_negociacao = 'aguardando_transportadora',
+                atualizado_em = CURRENT_TIMESTAMP
+            WHERE id = ?
+        """, (
+            valor,
+            prazo_dias,
+            observacoes,
+            proposta_id,
+        ))
+
+        # Histórico da contraproposta
+        conn.execute("""
+            INSERT INTO fretes_negociacao_historico (
+                proposta_id,
+                autor,
+                tipo,
+                valor,
+                prazo_dias,
+                observacoes
+            )
+            VALUES (?, 'operador', 'contraproposta', ?, ?, ?)
+        """, (
+            proposta_id,
+            valor,
+            prazo_dias,
+            observacoes,
+        ))
+
+        return True
+
+def responder_negociacao_transportadora(
+    frete_id,
+    proposta_id,
+    transportadora,
+    acao,
+    valor=None,
+    prazo_dias=None,
+    observacoes="",
+):
+    transportadora = str(transportadora or "").strip()
+    acao = str(acao or "").strip().lower()
+
+    with connect("fretes") as conn:
+
+        proposta = conn.execute("""
+            SELECT p.*, f.status AS status_frete
+            FROM fretes_propostas p
+            JOIN fretes f ON f.id = p.frete_id
+            WHERE p.id = ?
+              AND p.frete_id = ?
+        """, (proposta_id, frete_id)).fetchone()
+
+        if proposta is None:
+            raise ValueError("Negociação não encontrada.")
+
+        # Validar a transportadora responsável
+        if proposta["transportadora"].strip().lower() != transportadora.lower():
+            raise ValueError(
+                "Esta negociação não pertence à sua transportadora."
+            )
+
+        if proposta["status_frete"] != "negociacao":
+            raise ValueError("Frete não está em negociação.")
+
+        if proposta["status_negociacao"] != "aguardando_transportadora":
+            raise ValueError(
+                "Esta negociação não está aguardando a transportadora."
+            )
+
+        if acao == "aceitar":
+
+            conn.execute("""
+                UPDATE fretes_propostas
+                SET aceita = 1,
+                    status_negociacao = 'aceita',
+                    atualizado_em = CURRENT_TIMESTAMP
+                WHERE id = ?
+            """, (proposta_id,))
+
+            conn.execute("""
+                UPDATE fretes_propostas
+                SET aceita = 0
+                WHERE frete_id = ?
+                  AND id != ?
+            """, (frete_id, proposta_id))
+
+            conn.execute("""
+                UPDATE fretes
+                SET transportadora_escolhida = ?,
+                    atualizado_em = CURRENT_TIMESTAMP
+                WHERE id = ?
+            """, (
+                proposta["transportadora"],
+                frete_id,
+            ))
+
+            conn.execute("""
+                INSERT INTO fretes_negociacao_historico (
+                    proposta_id,
+                    autor,
+                    tipo,
+                    valor,
+                    prazo_dias,
+                    observacoes
+                )
+                VALUES (?, 'transportadora', 'aceite', ?, ?, ?)
+            """, (
+                proposta_id,
+                proposta["valor"],
+                proposta["prazo_dias"],
+                proposta["observacoes"],
+            ))
+
+            return {
+                "status": "aceita",
+                "mensagem": "Negociação aceita com sucesso."
+            }
+
+        elif acao == "contrapropor":
+
+            try:
+                valor = float(valor)
+            except (TypeError, ValueError, OverflowError):
+                raise ValueError("Valor da contraproposta inválido.")
+
+            if not math.isfinite(valor) or valor <= 0:
+                raise ValueError("O valor deve ser positivo.")
+
+            if prazo_dias is not None:
+                try:
+                    prazo_dias = int(prazo_dias)
+                except (TypeError, ValueError, OverflowError):
+                    raise ValueError("Prazo inválido.")
+
+                if not 0 <= prazo_dias <= 365:
+                    raise ValueError("Prazo inválido.")
+
+            observacoes = str(observacoes or "").strip()
+
+            conn.execute("""
+                UPDATE fretes_propostas
+                SET valor = ?,
+                    prazo_dias = ?,
+                    observacoes = ?,
+                    status_negociacao = 'aguardando_operador',
+                    atualizado_em = CURRENT_TIMESTAMP
+                WHERE id = ?
+            """, (
+                valor,
+                prazo_dias,
+                observacoes,
+                proposta_id,
+            ))
+
+            conn.execute("""
+                INSERT INTO fretes_negociacao_historico (
+                    proposta_id,
+                    autor,
+                    tipo,
+                    valor,
+                    prazo_dias,
+                    observacoes
+                )
+                VALUES (?, 'transportadora', 'contraproposta', ?, ?, ?)
+            """, (
+                proposta_id,
+                valor,
+                prazo_dias,
+                observacoes,
+            ))
+
+            return {
+                "status": "aguardando_operador",
+                "mensagem": "Contraproposta enviada com sucesso."
+            }
+
+        else:
+            raise ValueError("Ação inválida.")
 
 def confirmar_sap(frete_id, referencia_sap):
     with connect("fretes") as conn:
@@ -1086,20 +1384,28 @@ def list_propose_send(carrier):
                 fretes.peso_kg,
                 fretes.valor AS valor_frete,
                 fretes.status,
+
+                fretes_propostas.id AS proposta_id,
                 fretes_propostas.valor AS valor_proposta,
                 fretes_propostas.prazo_dias,
                 fretes_propostas.observacoes,
                 fretes_propostas.aceita,
-                fretes_propostas.criado_em
+                fretes_propostas.status_negociacao,
+                fretes_propostas.criado_em,
+                fretes_propostas.atualizado_em
 
             FROM fretes
 
             INNER JOIN fretes_propostas
                 ON fretes.id = fretes_propostas.frete_id
 
-            WHERE fretes_propostas.transportadora = ?
+            WHERE fretes_propostas.transportadora = ? COLLATE NOCASE
 
-            ORDER BY fretes_propostas.criado_em DESC
+            ORDER BY
+                COALESCE(
+                    fretes_propostas.atualizado_em,
+                    fretes_propostas.criado_em
+                ) DESC
             """,
             (carrier,)
         ).fetchall()

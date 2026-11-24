@@ -1082,3 +1082,176 @@
     }
 
 }
+
+/* =========================================
+   NEGOCIAÇÃO - MEUS FRETES
+========================================= */
+
+/* ÁREA DE AÇÕES */
+
+.oferta-acoes {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 18px;
+}
+
+.oferta-acoes button {
+    min-height: 40px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+/* ACEITAR */
+
+.btn-aceitar-proposta {
+    border: 1px solid #2f806d;
+    background: #2f806d;
+    color: #ffffff;
+}
+
+.btn-aceitar-proposta:hover:not(:disabled) {
+    background: #256c5b;
+    border-color: #256c5b;
+}
+
+/* CONTRAPROPOSTA */
+
+.btn-contraproposta {
+    border: 1px solid #dce5e2;
+    background: #ffffff;
+    color: #345c52;
+}
+
+.btn-contraproposta:hover:not(:disabled) {
+    background: #f2f8f5;
+    border-color: #a9cabe;
+}
+
+/* BOTÕES DESABILITADOS */
+
+.oferta-acoes button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* FORMULÁRIO */
+
+.contraproposta-form[hidden] {
+    display: none !important;
+}
+
+.contraproposta-form {
+    margin-top: 18px;
+    padding: 20px;
+    border: 1px solid #e1ebe6;
+    border-radius: 11px;
+    background: #f8fbf9;
+}
+
+.contraproposta-form h4 {
+    margin: 0 0 18px;
+    color: #243d3b;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+/* CAMPOS */
+
+.contraproposta-campos {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.campo-proposta {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    min-width: 0;
+}
+
+.campo-proposta:last-child {
+    grid-column: 1 / -1;
+}
+
+.campo-proposta label {
+    color: #526761;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.campo-proposta input,
+.campo-proposta textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 11px 12px;
+    border: 1px solid #dce6e1;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #263c36;
+    font-family: inherit;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.campo-proposta input:focus,
+.campo-proposta textarea:focus {
+    border-color: #2f806d;
+    box-shadow: 0 0 0 3px rgba(47, 128, 109, 0.10);
+}
+
+.campo-proposta textarea {
+    resize: vertical;
+    min-height: 85px;
+}
+
+/* RESULTADO DA NEGOCIAÇÃO */
+
+.proposta-resultado {
+    line-height: 1.6;
+}
+
+.js-status.status-negociacao {
+    background: #fff4df;
+    color: #986400;
+}
+
+.js-status.status-aceita {
+    background: #e5f4eb;
+    color: #247344;
+}
+
+/* RESPONSIVIDADE */
+
+@media (max-width: 650px) {
+
+    .oferta-acoes {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .oferta-acoes button {
+        width: 100%;
+    }
+
+    .contraproposta-campos {
+        grid-template-columns: 1fr;
+    }
+
+    .campo-proposta:last-child {
+        grid-column: auto;
+    }
+
+    .contraproposta-form {
+        padding: 16px;
+    }
+
+}

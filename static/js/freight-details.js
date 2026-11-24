@@ -74,7 +74,10 @@ const podeSelecionarTransportadora = [
     "negociacao"
 ].includes(STATUS) && !temAceita && !fechamento;
 const podeRegistrarProposta = STATUS === "negociacao" && !temAceita && !fechamento;
-const podeAceitarProposta = STATUS === "negociacao" && !temAceita && !fechamento;
+const podeAceitarProposta =
+    STATUS === "negociacao" &&
+    !temAceita &&
+    !fechamento;
 const encerrado = STATUS === "concluido" || STATUS === "cancelado";
 
 
@@ -552,6 +555,12 @@ $("fd-recomendacao").innerHTML = `
 function htmlFormProposta() {
   if (!podeRegistrarProposta) return "";
 
+  const existePropostaPendente = propostas.some(
+    p => p.status_negociacao === "aguardando_operador"
+  );
+
+if (existePropostaPendente) return "";
+
   if (!negotiationCarriers.length) {
     return `
         <p class="fd-hint">
@@ -615,10 +624,83 @@ function htmlItemProposta(p) {
     (p.observacoes ? ` · ${esc(p.observacoes)}` : "");
 
   let acao = "";
+
   if (propostaAceita(p)) {
     acao = '<span class="fd-tag">✓ Aceita</span>';
-  } else if (podeAceitarProposta) {
-    acao = `<button type="button" class="fd-btn fd-accept" data-id="${Number(p.id)}">Aceitar proposta</button>`;
+
+  } else if (
+    p.status_negociacao === "aguardando_operador" &&
+    !temAceita &&
+    !fechamento
+  ) {
+
+    if (STATUS === "em_oferta") {
+      acao = `
+        <button
+          type="button"
+          class="fd-btn fd-primary fd-start-proposal"
+          data-id="${Number(p.id)}"
+          data-carrier="${esc(p.transportadora)}">
+          Iniciar negociação
+        </button>
+      `;
+
+    } else if (STATUS === "negociacao") {
+      acao = `
+        <div class="fd-proposal-actions">
+          <button
+            type="button"
+            class="fd-btn fd-accept"
+            data-id="${Number(p.id)}">
+            Aceitar proposta
+          </button>
+
+          <button
+            type="button"
+            class="fd-btn fd-counter"
+            data-id="${Number(p.id)}">
+            Contrapropor
+          </button>
+        </div>
+
+        <form
+          class="fd-counter-form"
+          id="fd-counter-form-${Number(p.id)}"
+          hidden>
+
+          <h4>Enviar contraproposta</h4>
+
+          <label>Valor (R$)
+            <input
+              name="valor"
+              type="number"
+              min="0.01"
+              step="0.01"
+              value="${esc(p.valor ?? "")}"
+              required>
+          </label>
+
+          <label>Prazo (dias)
+            <input
+              name="prazo_dias"
+              type="number"
+              min="0"
+              max="365"
+              value="${esc(p.prazo_dias ?? "")}">
+          </label>
+
+          <label>Observações
+            <textarea
+              name="observacoes"
+              rows="3">${esc(p.observacoes ?? "")}</textarea>
+          </label>
+
+          <button type="submit" class="fd-btn fd-primary">
+            Enviar contraproposta
+          </button>
+        </form>
+      `;
+    }
   }
 
   return `
@@ -638,11 +720,32 @@ function htmlHistoricoPropostas() {
   return `<div class="fd-list">${propostas.map(htmlItemProposta).join("")}</div>`;
 }
 
+
 function renderNegociacao() {
   $("fd-negociacao").innerHTML = `
     ${htmlFormProposta()}
     <h3>Histórico de propostas</h3>
     ${htmlHistoricoPropostas()}`;
+
+  // Iniciar negociação a partir de uma proposta recebida
+  document.querySelectorAll(".fd-start-proposal").forEach((botao) =>
+    botao.addEventListener("click", () =>
+      executar(async () => {
+        const transportadora = botao.dataset.carrier;
+
+        if (!confirm(`Iniciar negociação com ${transportadora}?`)) {
+          return;
+        }
+
+        await postJson(
+          `/api/nova-carga/fretes/${FRETE_ID}/negociacao`,
+          { transportadora }
+        );
+
+        recarregar();
+      })
+    )
+  );
 
   // Registrar nova proposta
   $("fd-proposal-form")?.addEventListener("submit", (e) => {
@@ -652,17 +755,18 @@ function renderNegociacao() {
     executar(async () => {
       const botao = form.querySelector("button");
       botao.disabled = true;
+
       try {
         await api(`/nova-carga/fretes/${FRETE_ID}/propostas`, {
-        method: "POST",
-        headers: { "X-Requested-With": "XMLHttpRequest" },
-        body: new FormData(form),
-    });
+          method: "POST",
+          headers: { "X-Requested-With": "XMLHttpRequest" },
+          body: new FormData(form),
+        });
 
-    // Release the automatic selection for the next proposal.
-    sessionStorage.removeItem(carrierStorageKey);
+        // Release the automatic selection for the next proposal.
+        sessionStorage.removeItem(carrierStorageKey);
 
-    recarregar();
+        recarregar();
       } finally {
         botao.disabled = false;
       }
@@ -674,12 +778,51 @@ function renderNegociacao() {
     botao.addEventListener("click", () =>
       executar(async () => {
         if (!confirm("Aceitar esta proposta?")) return;
-        await postAjax(`/nova-carga/fretes/${FRETE_ID}/propostas/${botao.dataset.id}/aceitar`);
+
+        await postAjax(
+          `/nova-carga/fretes/${FRETE_ID}/propostas/${botao.dataset.id}/aceitar`
+        );
+
         recarregar();
       })
     )
   );
+
+  // Abrir formulário de contraproposta
+  document.querySelectorAll(".fd-counter").forEach((botao) =>
+    botao.addEventListener("click", () => {
+      const form = $(`fd-counter-form-${botao.dataset.id}`);
+
+      if (form) {
+        form.hidden = !form.hidden;
+      }
+    })
+  );
+
+  // Enviar contraproposta
+  document.querySelectorAll(".fd-counter-form").forEach((form) =>
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      executar(async () => {
+        const botao = form.querySelector('button[type="submit"]');
+        botao.disabled = true;
+
+        try {
+          await postAjax(
+            `/nova-carga/fretes/${FRETE_ID}/propostas/${form.id.replace("fd-counter-form-", "")}/contrapropor`,
+            new FormData(form)
+          );
+
+          recarregar();
+        } finally {
+          botao.disabled = false;
+        }
+      });
+    })
+  );
 }
+
 
 
 /* --------------------------------------------------------------------------

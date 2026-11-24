@@ -43,6 +43,7 @@ from services.freight_repository import (
     aceitar_proposta,
     confirmar_sap,
     iniciar_negociacao,
+    contrapropor,
     publicar_oferta,
     retirar_oferta,
     atualizar_dados_carga,
@@ -162,6 +163,79 @@ def fretes():
 
 
 @fretes_bp.route(
+    "/nova-carga/fretes/<int:frete_id>/propostas/<int:proposta_id>/contrapropor",
+    methods=["POST"],
+)
+def contrapropor_frete(frete_id, proposta_id):
+    try:
+        valor = request.form.get("valor")
+        prazo_dias = request.form.get("prazo_dias")
+        observacoes = request.form.get("observacoes", "")
+
+        contrapropor(
+            frete_id=frete_id,
+            proposta_id=proposta_id,
+            valor=valor,
+            prazo_dias=prazo_dias or None,
+            observacoes=observacoes,
+        )
+
+        return jsonify({
+            "sucesso": True,
+            "mensagem": "Contraproposta enviada com sucesso.",
+        })
+
+    except ValueError as erro:
+        return jsonify({
+            "sucesso": False,
+            "mensagem": str(erro),
+        }), 400
+
+    except Exception:
+        log.exception(
+            "Erro ao registrar contraproposta do frete %s",
+            frete_id,
+        )
+
+        return jsonify({
+            "sucesso": False,
+            "mensagem": "Erro interno ao registrar contraproposta.",
+        }), 500
+
+@fretes_bp.route(
+    "/api/nova-carga/fretes/<int:frete_id>/negociacao",
+    methods=["POST"],
+)
+def iniciar_negociacao_frete(frete_id):
+    dados = request.get_json(silent=True) or {}
+    transportadora = dados.get("transportadora")
+
+    try:
+        iniciar_negociacao(frete_id, transportadora)
+
+        return jsonify({
+            "sucesso": True,
+            "mensagem": "Negociação iniciada com sucesso.",
+        })
+
+    except ValueError as erro:
+        return jsonify({
+            "sucesso": False,
+            "mensagem": str(erro),
+        }), 400
+
+    except Exception:
+        log.exception(
+            "Erro ao iniciar negociação do frete %s",
+            frete_id,
+        )
+
+        return jsonify({
+            "sucesso": False,
+            "mensagem": "Erro interno ao iniciar negociação.",
+        }), 500
+
+@fretes_bp.route(
     "/api/fretes/<int:frete_id>/status",
     methods=["PATCH"],
 )
@@ -193,8 +267,6 @@ def alterar_status(frete_id):
         "frete_id": frete_id,
         "status": novo_status,
     })
-
-
 
 # ==========================================
 # FREIGHT DETAILS PAGE

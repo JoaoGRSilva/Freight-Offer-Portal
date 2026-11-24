@@ -14,15 +14,10 @@ Meus Fretes | Digital Freight Offering Portal
 
 {% block content %}
 
-<!-- CABEÇALHO -->
-
 <section class="page-header">
     <h1>Bem-vindo, {{ current_user.carrier_name }}</h1>
     <p>Acompanhe suas propostas e negociações.</p>
 </section>
-
-
-<!-- LISTA DE FRETES -->
 
 <section class="ofertas">
 
@@ -30,14 +25,23 @@ Meus Fretes | Digital Freight Offering Portal
         {{ fretes | length }} proposta(s) enviada(s)
     </div>
 
-
     <div class="ofertas-lista">
 
         {% if fretes %}
 
             {% for frete in fretes %}
 
-                <article class="oferta-card">
+                <article
+                    class="oferta-card"
+                    id="proposta-{{ frete.proposta_id }}"
+                    data-frete-id="{{ frete.id }}"
+                    data-proposta-id="{{ frete.proposta_id }}"
+                    data-endpoint="{{ url_for(
+                        'carrier.responder_proposta',
+                        frete_id=frete.id,
+                        proposta_id=frete.proposta_id
+                    ) }}"
+                >
 
                     <!-- TOPO DO CARD -->
 
@@ -57,46 +61,26 @@ Meus Fretes | Digital Freight Offering Portal
 
                         </div>
 
-
                         <!-- STATUS -->
 
-                        <div class="oferta-status
-                            {% if frete.status == 'negociacao' %}
-                                status-negociacao
-                            {% elif frete.status == 'cotacao_aceita' %}
-                                status-aceita
-                            {% elif frete.status == 'concluido' %}
-                                status-concluido
-                            {% elif frete.status == 'cancelado' %}
-                                status-cancelado
-                            {% else %}
-                                status-pendente
-                            {% endif %}
-                        ">
+                        <div class="oferta-status status-pendente js-status">
 
-                            {% if frete.status == 'negociacao' %}
-                                Em negociação
+                            {% if frete.status_negociacao == 'aceita' %}
+                                Negociação aceita
 
-                            {% elif frete.status == 'cotacao_aceita' %}
-                                Cotação aceita
+                            {% elif frete.status_negociacao == 'aguardando_transportadora' %}
+                                Contraproposta recebida
 
-                            {% elif frete.status == 'concluido' %}
-                                Concluído
-
-                            {% elif frete.status == 'cancelado' %}
-                                Cancelado
-
-                            {% elif frete.status == 'em_oferta' %}
-                                Aguardando retorno
+                            {% elif frete.status_negociacao == 'aguardando_operador' %}
+                                Aguardando operador
 
                             {% else %}
-                                {{ frete.status }}
+                                {{ frete.status_negociacao }}
                             {% endif %}
 
                         </div>
 
                     </div>
-
 
                     <!-- INFORMAÇÕES DO FRETE -->
 
@@ -105,74 +89,166 @@ Meus Fretes | Digital Freight Offering Portal
                         <div class="oferta-info-item">
                             <span class="info-label">Peso</span>
                             <strong>
-                                {{ "{:,.0f}".format(frete.peso_kg).replace(",", ".") }} kg
+                                {{ "{:,.0f}".format(frete.peso_kg or 0).replace(",", ".") }} kg
                             </strong>
                         </div>
 
                         <div class="oferta-info-item">
                             <span class="info-label">Valor original</span>
-                            <strong>
-                                R$ {{ "{:,.2f}".format(frete.valor_frete).replace(",", "X").replace(".", ",").replace("X", ".") }}
+                            <strong class="js-valor-original">
+                                R$ {{ "{:,.2f}".format(frete.valor_frete or 0).replace(",", "X").replace(".", ",").replace("X", ".") }}
                             </strong>
                         </div>
 
                         <div class="oferta-info-item">
-                            <span class="info-label">Prazo proposto</span>
-                            <strong>
-                                {{ frete.prazo_dias }} dia(s)
+                            <span class="info-label">Prazo atual</span>
+                            <strong class="js-prazo">
+                                {{ frete.prazo_dias if frete.prazo_dias is not none else 'Não informado' }}
+                                {% if frete.prazo_dias is not none %}dia(s){% endif %}
                             </strong>
                         </div>
 
                     </div>
-
 
                     <!-- PROPOSTA -->
 
                     <div class="oferta-proposta">
 
                         <div>
-                            <span class="info-label">Sua proposta</span>
+                            <span class="info-label">Valor atual da negociação</span>
 
-                            <strong class="oferta-valor">
-                                R$ {{ "{:,.2f}".format(frete.valor_proposta).replace(",", "X").replace(".", ",").replace("X", ".") }}
+                            <strong class="oferta-valor js-valor-proposta">
+                                R$ {{ "{:,.2f}".format(frete.valor_proposta or 0).replace(",", "X").replace(".", ",").replace("X", ".") }}
                             </strong>
                         </div>
 
                         <div class="oferta-data">
-                            <span class="info-label">Enviada em</span>
-                            <strong>{{ frete.criado_em }}</strong>
+                            <span class="info-label">Última atualização</span>
+                            <strong class="js-data">
+                                {{ frete.atualizado_em or frete.criado_em }}
+                            </strong>
                         </div>
 
                     </div>
-
 
                     <!-- OBSERVAÇÕES -->
 
-                    {% if frete.observacoes %}
+                    <div class="oferta-observacoes js-observacoes"
+                         {% if not frete.observacoes %}hidden{% endif %}>
 
-                        <div class="oferta-observacoes">
-                            <span class="info-label">Observações</span>
-                            <p>{{ frete.observacoes }}</p>
-                        </div>
+                        <span class="info-label">Observações</span>
+                        <p>{{ frete.observacoes or '' }}</p>
 
-                    {% endif %}
+                    </div>
 
-
-                    <!-- RODAPÉ -->
+                    <!-- RESULTADO -->
 
                     <div class="oferta-rodape">
 
-                        {% if frete.aceita %}
-                            <span class="proposta-resultado">
+                        <span class="proposta-resultado js-resultado">
+
+                            {% if frete.status_negociacao == 'aceita' %}
                                 Sua proposta foi aceita!
-                            </span>
-                        {% else %}
-                            <span class="proposta-resultado">
-                                Aguardando avaliação do operador
-                            </span>
-                        {% endif %}
+
+                            {% elif frete.status_negociacao == 'aguardando_transportadora' %}
+                                O operador enviou uma contraproposta. Avalie as condições.
+
+                            {% else %}
+                                Aguardando avaliação do operador.
+                            {% endif %}
+
+                        </span>
 
                     </div>
+
+                    <!-- AÇÕES DA TRANSPORTADORA -->
+
+                    {% if frete.status_negociacao == 'aguardando_transportadora' %}
+
+                        <div class="oferta-acoes js-acoes">
+
+                            <button
+                                type="button"
+                                class="btn-aceitar-proposta js-aceitar"
+                            >
+                                Aceitar contraproposta
+                            </button>
+
+                            <button
+                                type="button"
+                                class="btn-contraproposta js-abrir-form"
+                            >
+                                Enviar contraproposta
+                            </button>
+
+                        </div>
+
+                        <!-- FORMULÁRIO DE CONTRAPROPOSTA -->
+
+                        <div class="contraproposta-form js-form" hidden>
+
+                            <h4>Enviar nova contraproposta</h4>
+
+                            <div class="contraproposta-campos">
+
+                                <div class="campo-proposta">
+                                    <label>Valor (R$)</label>
+
+                                    <input
+                                        type="number"
+                                        class="js-input-valor"
+                                        min="0.01"
+                                        step="0.01"
+                                        required
+                                        placeholder="Ex.: 4350.00"
+                                    >
+                                </div>
+
+                                <div class="campo-proposta">
+                                    <label>Prazo (dias)</label>
+
+                                    <input
+                                        type="number"
+                                        class="js-input-prazo"
+                                        min="0"
+                                        max="365"
+                                        placeholder="Ex.: 3"
+                                    >
+                                </div>
+
+                                <div class="campo-proposta">
+                                    <label>Observações</label>
+
+                                    <textarea
+                                        class="js-input-observacoes"
+                                        rows="3"
+                                        placeholder="Descreva suas condições..."
+                                    ></textarea>
+                                </div>
+
+                            </div>
+
+                            <div class="oferta-acoes">
+
+                                <button
+                                    type="button"
+                                    class="btn-contraproposta js-enviar"
+                                >
+                                    Enviar proposta
+                                </button>
+
+                                <button
+                                    type="button"
+                                    class="js-cancelar"
+                                >
+                                    Cancelar
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                    {% endif %}
 
                 </article>
 
@@ -181,11 +257,14 @@ Meus Fretes | Digital Freight Offering Portal
         {% else %}
 
             <div class="ofertas-vazio">
+
                 <h3>Você ainda não possui propostas</h3>
+
                 <p>
                     Quando você demonstrar interesse em um frete
                     e enviar uma proposta, ela aparecerá aqui.
                 </p>
+
             </div>
 
         {% endif %}
@@ -193,5 +272,243 @@ Meus Fretes | Digital Freight Offering Portal
     </div>
 
 </section>
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const cards = document.querySelectorAll(".oferta-card");
+
+    function formatarMoeda(valor) {
+
+        return Number(valor).toLocaleString("pt-BR", {
+            style: "currency",
+            currency: "BRL"
+        });
+
+    }
+
+    async function responder(card, dados) {
+
+        const freteId = card.dataset.freteId;
+        const propostaId = card.dataset.propostaId;
+
+        const url = card.dataset.endpoint;
+
+        try {
+
+            const response = await fetch(url, {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify(dados)
+
+            });
+
+            const resultado = await response.json();
+
+            if (!response.ok || !resultado.sucesso) {
+
+                throw new Error(
+                    resultado.mensagem || "Não foi possível processar a negociação."
+                );
+
+            }
+
+            return resultado;
+
+        } catch (erro) {
+
+            alert(erro.message);
+            return null;
+
+        }
+
+    }
+
+    function atualizarCard(card, resultado, dados) {
+
+        const status = card.querySelector(".js-status");
+        const valor = card.querySelector(".js-valor-proposta");
+        const prazo = card.querySelector(".js-prazo");
+        const observacoes = card.querySelector(".js-observacoes");
+        const resultadoTexto = card.querySelector(".js-resultado");
+
+        status.className = "oferta-status status-negociacao js-status";
+
+        if (resultado.status === "aceita") {
+
+            status.textContent = "Negociação aceita";
+
+            resultadoTexto.textContent =
+                "Você aceitou a contraproposta do operador!";
+
+            const acoes = card.querySelector(".js-acoes");
+
+            if (acoes) acoes.remove();
+
+            const formulario = card.querySelector(".js-form");
+
+            if (formulario) formulario.remove();
+
+        }
+
+        else if (resultado.status === "aguardando_operador") {
+
+            status.textContent = "Aguardando operador";
+
+            resultadoTexto.textContent =
+                "Sua contraproposta foi enviada. Aguarde a avaliação do operador.";
+
+            valor.textContent = formatarMoeda(dados.valor);
+
+            prazo.textContent = dados.prazo_dias !== null
+                ? `${dados.prazo_dias} dia(s)`
+                : "Não informado";
+
+            observacoes.hidden = !dados.observacoes;
+
+            observacoes.querySelector("p").textContent =
+                dados.observacoes || "";
+
+            const acoes = card.querySelector(".js-acoes");
+
+            if (acoes) acoes.remove();
+
+            const formulario = card.querySelector(".js-form");
+
+            if (formulario) formulario.remove();
+
+        }
+
+    }
+
+    cards.forEach(card => {
+
+        const aceitar = card.querySelector(".js-aceitar");
+        const abrirForm = card.querySelector(".js-abrir-form");
+        const formulario = card.querySelector(".js-form");
+        const cancelar = card.querySelector(".js-cancelar");
+        const enviar = card.querySelector(".js-enviar");
+
+        if (abrirForm) {
+
+            abrirForm.addEventListener("click", function () {
+
+                formulario.hidden = false;
+                abrirForm.closest(".js-acoes").hidden = true;
+
+            });
+
+        }
+
+        if (cancelar) {
+
+            cancelar.addEventListener("click", function () {
+
+                formulario.hidden = true;
+
+                card.querySelector(".js-acoes").hidden = false;
+
+            });
+
+        }
+
+        if (aceitar) {
+
+            aceitar.addEventListener("click", async function () {
+
+                if (!confirm("Deseja aceitar a contraproposta do operador?")) {
+                    return;
+                }
+
+                aceitar.disabled = true;
+
+                const resultado = await responder(card, {
+                    acao: "aceitar"
+                });
+
+                aceitar.disabled = false;
+
+                if (resultado) {
+
+                    atualizarCard(card, resultado, {});
+
+                }
+
+            });
+
+        }
+
+        if (enviar) {
+
+            enviar.addEventListener("click", async function () {
+
+                const valorInput = card.querySelector(".js-input-valor");
+                const prazoInput = card.querySelector(".js-input-prazo");
+                const observacoesInput = card.querySelector(".js-input-observacoes");
+
+                const valor = Number(valorInput.value);
+
+                const prazo = prazoInput.value === ""
+                    ? null
+                    : Number(prazoInput.value);
+
+                if (!Number.isFinite(valor) || valor <= 0) {
+
+                    alert("Informe um valor válido para a contraproposta.");
+                    return;
+
+                }
+
+                if (
+                    prazo !== null &&
+                    (!Number.isInteger(prazo) || prazo < 0 || prazo > 365)
+                ) {
+
+                    alert("Informe um prazo entre 0 e 365 dias.");
+                    return;
+
+                }
+
+                const dados = {
+
+                    acao: "contrapropor",
+                    valor: valor,
+                    prazo_dias: prazo,
+                    observacoes: observacoesInput.value.trim()
+
+                };
+
+                enviar.disabled = true;
+
+                const resultado = await responder(card, dados);
+
+                enviar.disabled = false;
+
+                if (resultado) {
+
+                    atualizarCard(card, resultado, dados);
+
+                }
+
+            });
+
+        }
+
+    });
+
+});
+
+</script>
 
 {% endblock %}
