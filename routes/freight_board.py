@@ -1,20 +1,5 @@
-from services.access_control import authorized_plants, plant_code
-from flask_login import current_user
-"""
-Rotas de /fretes: mesa de fretes, página de detalhe e todo o fluxo
-operacional do frete (oferta, negociação, propostas, SAP e conclusão).
-
-As rotas que antes ficavam na Nova Carga foram movidas para cá com as
-MESMAS URLs. Assim, o JS não precisa mudar de endereço agora; os prefixos
-podem ser trocados depois, com tudo funcionando.
-
-IMPORTANTE: remova essas rotas do nova_carga.py ao instalar este arquivo.
-Duas rotas com a mesma URL em blueprints diferentes causam confusão.
-"""
-
+from services.access_control import authorized_plants
 import logging
-import math
-
 from flask import (
     Blueprint,
     abort,
@@ -29,25 +14,14 @@ from flask import (
 from analytics.truck import recomendar_caminhao
 from services.freight_view import get_freight_view_data
 from services.carrier_recommendation import (
-    recommend,
-    _all_corporate_carriers,
-    _trip_history,
+    recommend
 )
 from services.json_utils import json_safe
 from services.freight_repository import (
     listar_fretes,
     atualizar_status,
-    obter_frete,
-    obter_fechamento,
-    registrar_proposta,
-    aceitar_proposta,
-    confirmar_sap,
     iniciar_negociacao,
     contrapropor,
-    publicar_oferta,
-    retirar_oferta,
-    atualizar_dados_carga,
-    concluir_frete,
     listar_transportadoras_negociacao,
 )
 

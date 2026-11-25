@@ -3,13 +3,10 @@ from flask_login import current_user
 import math
 from flask import (
     Blueprint,
-    current_app,
     jsonify,
     render_template,
     request,
 )
-from services.db import connect
-
 from services.freight_repository import (
     listar_fretes_em_oferta,
     registrar_proposta,
