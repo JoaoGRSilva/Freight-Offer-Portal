@@ -884,6 +884,7 @@ def responder_negociacao_transportadora(
         else:
             raise ValueError("Ação inválida.")
 
+
 def confirmar_sap(frete_id, referencia_sap):
     with connect("fretes") as conn:
         frete = conn.execute(
@@ -891,7 +892,19 @@ def confirmar_sap(frete_id, referencia_sap):
             (frete_id,),
         ).fetchone()
 
-        if frete is None or frete["status"] != "negociacao":
+        if frete is None:
+            raise ValueError("Frete não está em negociação")
+
+        fechamento = conn.execute("""
+            SELECT frete_id
+            FROM fretes_fechamentos
+            WHERE frete_id = ?
+        """, (frete_id,)).fetchone()
+
+        if fechamento is not None:
+            raise ValueError("Frete já possui fechamento")
+
+        if frete["status"] != "negociacao":
             raise ValueError("Frete não está em negociação")
 
         proposta = conn.execute("""
@@ -902,15 +915,6 @@ def confirmar_sap(frete_id, referencia_sap):
 
         if proposta is None:
             raise ValueError("Aceite uma proposta primeiro")
-
-        fechamento = conn.execute("""
-            SELECT frete_id
-            FROM fretes_fechamentos
-            WHERE frete_id = ?
-        """, (frete_id,)).fetchone()
-
-        if fechamento is not None:
-            raise ValueError("Frete já possui fechamento")
 
         conn.execute("""
             INSERT INTO fretes_fechamentos (
@@ -932,6 +936,7 @@ def confirmar_sap(frete_id, referencia_sap):
             )
             VALUES (?, 'negociacao', 'cotacao_aceita')
         """, (frete_id,))
+
 
 
 def obter_id_por_chave(chave):
@@ -1349,6 +1354,7 @@ def delete_base():
         tabelas = [
             "fretes_fechamentos",
             "fretes_historico_status",
+            "fretes_negociacao_historico",
             "fretes_propostas",
             "fretes_transportadoras_negociacao",
             "fretes",

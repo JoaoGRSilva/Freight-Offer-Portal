@@ -168,3 +168,525 @@ def test_carrier_cannot_access_plant():
     }, plants=["SP01"])
 
     assert user.can_access_plant("SP01") is False
+
+def test_user_cannot_access_nonexistent_freight(app_client, monkeypatch):
+    from services.db import connect
+    from werkzeug.security import generate_password_hash
+    import services.access_control as access_control
+
+    app, client = app_client
+
+    # Cria um usuário interno autenticado.
+    with connect("users") as conn:
+        cursor = conn.execute(
+            """
+            INSERT INTO users (
+                name,
+                email,
+                password_hash,
+                role,
+                active,
+                is_admin
+            )
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                "Operador de teste",
+                "operador_frete@teste.com",
+                generate_password_hash("senha-teste"),
+                "internal",
+                1,
+                0,
+            ),
+        )
+
+        user_id = cursor.lastrowid
+
+    # Simula um frete que não existe.
+    monkeypatch.setattr(
+        access_control,
+        "obter_frete",
+        lambda freight_id: None,
+    )
+
+    # Simula a sessão autenticada.
+    with client.session_transaction() as sess:
+        sess["_user_id"] = str(user_id)
+        sess["_fresh"] = True
+        sess["_csrf_token"] = "token-de-teste"
+
+    # Tenta acessar o frete inexistente.
+    response = client.patch(
+        "/api/fretes/999/status",
+        json={"status": "em_preparacao"},
+        headers={"X-CSRF-Token": "token-de-teste"},
+    )
+
+    assert response.status_code == 404
+
+def test_operator_cannot_access_freight_from_other_plant(app_client, monkeypatch):
+    from services.db import connect
+    from werkzeug.security import generate_password_hash
+    import services.access_control as access_control
+
+    app, client = app_client
+
+    # Cria um operador sem vínculo com a planta SP01.
+    with connect("users") as conn:
+        cursor = conn.execute(
+            """
+            INSERT INTO users (
+                name,
+                email,
+                password_hash,
+                role,
+                active,
+                is_admin
+            )
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                "Operador sem acesso",
+                "operador_sem_acesso@teste.com",
+                generate_password_hash("senha-teste"),
+                "internal",
+                1,
+                0,
+            ),
+        )
+
+        user_id = cursor.lastrowid
+
+    # Simula um frete existente da planta SP01.
+    monkeypatch.setattr(
+        access_control,
+        "obter_frete",
+        lambda freight_id: {
+            "id": freight_id,
+            "detalhes": {
+                "planta": {
+                    "codigo": "SP01"
+                }
+            }
+        },
+    )
+
+    # Simula a sessão autenticada.
+    with client.session_transaction() as sess:
+        sess["_user_id"] = str(user_id)
+        sess["_fresh"] = True
+        sess["_csrf_token"] = "token-de-teste"
+
+    response = client.patch(
+        "/api/fretes/999/status",
+        json={"status": "em_preparacao"},
+        headers={"X-CSRF-Token": "token-de-teste"},
+    )
+
+    assert response.status_code == 403
+
+
+def test_operator_can_access_freight_from_assigned_plant(app_client, monkeypatch):
+    from services.db import connect
+    from werkzeug.security import generate_password_hash
+    import services.access_control as access_control
+    import routes.freight_board as freight_board
+
+    app, client = app_client
+
+    # Cria o operador.
+    with connect("users") as conn:
+        cursor = conn.execute(
+            """
+            INSERT INTO users (
+                name,
+                email,
+                password_hash,
+                role,
+                active,
+                is_admin
+            )
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                "Operador autorizado",
+                "operador_autorizado@teste.com",
+                generate_password_hash("senha-teste"),
+                "internal",
+                1,
+                0,
+            ),
+        )
+
+        user_id = cursor.lastrowid
+
+        # Vincula o operador à planta SP01.
+        conn.execute(
+            """
+            INSERT INTO user_plants (user_id, plant_code)
+            VALUES (?, ?)
+            """,
+            (user_id, "SP01"),
+        )
+
+    # Simula um frete da planta autorizada.
+    monkeypatch.setattr(
+        access_control,
+        "obter_frete",
+        lambda freight_id: {
+            "id": freight_id,
+            "detalhes": {
+                "planta": {
+                    "codigo": "SP01"
+                }
+            }
+        },
+    )
+
+    # Impede a execução das operações internas da tela.
+    monkeypatch.setattr(
+        freight_board,
+        "get_freight_view_data",
+        lambda freight_id: None,
+    )
+
+    # Simula a sessão autenticada.
+    with client.session_transaction() as sess:
+        sess["_user_id"] = str(user_id)
+        sess["_fresh"] = True
+        sess["_csrf_token"] = "token-de-teste"
+
+    response = client.get("/fretes/999")
+
+    # A autorização foi permitida; a rota retornou seu próprio 404.
+    assert response.status_code == 404
+
+def test_operator_can_update_status_of_assigned_freight(app_client, monkeypatch):
+    from services.db import connect
+    from werkzeug.security import generate_password_hash
+    import services.access_control as access_control
+    import routes.freight_board as freight_board
+
+    app, client = app_client
+
+    # Cria um operador.
+    with connect("users") as conn:
+        cursor = conn.execute(
+            """
+            INSERT INTO users (
+                name,
+                email,
+                password_hash,
+                role,
+                active,
+                is_admin
+            )
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                "Operador autorizado",
+                "operador_status@teste.com",
+                generate_password_hash("senha-teste"),
+                "internal",
+                1,
+                0,
+            ),
+        )
+
+        user_id = cursor.lastrowid
+
+        # Autoriza o operador na planta SP01.
+        conn.execute(
+            """
+            INSERT INTO user_plants (user_id, plant_code)
+            VALUES (?, ?)
+            """,
+            (user_id, "SP01"),
+        )
+
+    # Simula um frete pertencente à planta autorizada.
+    monkeypatch.setattr(
+        access_control,
+        "obter_frete",
+        lambda freight_id: {
+            "id": freight_id,
+            "detalhes": {
+                "planta": {
+                    "codigo": "SP01"
+                }
+            }
+        },
+    )
+
+    # Registra se a função de atualização foi realmente chamada.
+    chamadas = []
+
+    def atualizar_status_fake(frete_id, novo_status):
+        chamadas.append((frete_id, novo_status))
+        return True
+
+    monkeypatch.setattr(
+        freight_board,
+        "atualizar_status",
+        atualizar_status_fake,
+    )
+
+    # Simula a sessão autenticada.
+    with client.session_transaction() as sess:
+        sess["_user_id"] = str(user_id)
+        sess["_fresh"] = True
+        sess["_csrf_token"] = "token-de-teste"
+
+    response = client.patch(
+        "/api/fretes/999/status",
+        json={"status": "em_preparacao"},
+        headers={"X-CSRF-Token": "token-de-teste"},
+    )
+
+    assert response.status_code == 200
+    assert chamadas == [(999, "em_preparacao")]
+
+def test_operator_cannot_update_status_of_other_plant(
+    app_client, monkeypatch
+):
+    from services.db import connect
+    from werkzeug.security import generate_password_hash
+    import services.access_control as access_control
+    import routes.freight_board as freight_board
+
+    app, client = app_client
+
+    # Cria um operador sem vínculo com a planta SP01.
+    with connect("users") as conn:
+        cursor = conn.execute(
+            """
+            INSERT INTO users (
+                name,
+                email,
+                password_hash,
+                role,
+                active,
+                is_admin
+            )
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                "Operador sem acesso",
+                "operador_sem_acesso@teste.com",
+                generate_password_hash("senha-teste"),
+                "internal",
+                1,
+                0,
+            ),
+        )
+
+        user_id = cursor.lastrowid
+
+    # Simula um frete da planta SP01.
+    monkeypatch.setattr(
+        access_control,
+        "obter_frete",
+        lambda freight_id: {
+            "id": freight_id,
+            "detalhes": {
+                "planta": {
+                    "codigo": "SP01"
+                }
+            }
+        },
+    )
+
+    # Identifica se a atualização chegou a ser executada.
+    chamadas = []
+
+    def atualizar_status_fake(frete_id, novo_status):
+        chamadas.append((frete_id, novo_status))
+        return True
+
+    monkeypatch.setattr(
+        freight_board,
+        "atualizar_status",
+        atualizar_status_fake,
+    )
+
+    # Simula a sessão autenticada.
+    with client.session_transaction() as sess:
+        sess["_user_id"] = str(user_id)
+        sess["_fresh"] = True
+        sess["_csrf_token"] = "token-de-teste"
+
+    response = client.patch(
+        "/api/fretes/999/status",
+        json={"status": "em_preparacao"},
+        headers={"X-CSRF-Token": "token-de-teste"},
+    )
+
+    assert response.status_code == 403
+    assert chamadas == []
+
+
+
+def test_operator_cannot_start_negotiation_from_other_plant(
+    app_client, monkeypatch
+):
+    from services.db import connect
+    from werkzeug.security import generate_password_hash
+    import services.access_control as access_control
+    import routes.freight_board as freight_board
+
+    app, client = app_client
+
+    # Cria um operador sem acesso à planta SP01.
+    with connect("users") as conn:
+        cursor = conn.execute(
+            """
+            INSERT INTO users (
+                name,
+                email,
+                password_hash,
+                role,
+                active,
+                is_admin
+            )
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                "Operador sem acesso",
+                "operador_negociacao@teste.com",
+                generate_password_hash("senha-teste"),
+                "internal",
+                1,
+                0,
+            ),
+        )
+
+        user_id = cursor.lastrowid
+
+    # Simula um frete pertencente à planta SP01.
+    monkeypatch.setattr(
+        access_control,
+        "obter_frete",
+        lambda freight_id: {
+            "id": freight_id,
+            "detalhes": {
+                "planta": {
+                    "codigo": "SP01"
+                }
+            }
+        },
+    )
+
+    # Identifica se a negociação chegou a ser executada.
+    chamadas = []
+
+    def iniciar_negociacao_fake(frete_id, transportadora):
+        chamadas.append((frete_id, transportadora))
+
+    monkeypatch.setattr(
+        freight_board,
+        "iniciar_negociacao",
+        iniciar_negociacao_fake,
+    )
+
+    # Simula a sessão autenticada.
+    with client.session_transaction() as sess:
+        sess["_user_id"] = str(user_id)
+        sess["_fresh"] = True
+        sess["_csrf_token"] = "token-de-teste"
+
+    response = client.post(
+        "/api/nova-carga/fretes/999/negociacao",
+        json={"transportadora": "Transportadora Teste"},
+        headers={"X-CSRF-Token": "token-de-teste"},
+    )
+
+    assert response.status_code == 403
+    assert chamadas == []
+
+
+
+def test_operator_can_start_negotiation_from_assigned_plant(
+    app_client, monkeypatch
+):
+    from services.db import connect
+    from werkzeug.security import generate_password_hash
+    import services.access_control as access_control
+    import routes.freight_board as freight_board
+
+    app, client = app_client
+
+    # Cria um operador.
+    with connect("users") as conn:
+        cursor = conn.execute(
+            """
+            INSERT INTO users (
+                name,
+                email,
+                password_hash,
+                role,
+                active,
+                is_admin
+            )
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                "Operador autorizado",
+                "operador_negociacao_ok@teste.com",
+                generate_password_hash("senha-teste"),
+                "internal",
+                1,
+                0,
+            ),
+        )
+
+        user_id = cursor.lastrowid
+
+        # Autoriza o operador na planta SP01.
+        conn.execute(
+            """
+            INSERT INTO user_plants (user_id, plant_code)
+            VALUES (?, ?)
+            """,
+            (user_id, "SP01"),
+        )
+
+    # Simula um frete da planta autorizada.
+    monkeypatch.setattr(
+        access_control,
+        "obter_frete",
+        lambda freight_id: {
+            "id": freight_id,
+            "detalhes": {
+                "planta": {
+                    "codigo": "SP01"
+                }
+            }
+        },
+    )
+
+    # Registra a chamada à função de negociação.
+    chamadas = []
+
+    def iniciar_negociacao_fake(frete_id, transportadora):
+        chamadas.append((frete_id, transportadora))
+
+    monkeypatch.setattr(
+        freight_board,
+        "iniciar_negociacao",
+        iniciar_negociacao_fake,
+    )
+
+    with client.session_transaction() as sess:
+        sess["_user_id"] = str(user_id)
+        sess["_fresh"] = True
+        sess["_csrf_token"] = "token-de-teste"
+
+    response = client.post(
+        "/api/nova-carga/fretes/999/negociacao",
+        json={"transportadora": "Transportadora Teste"},
+        headers={"X-CSRF-Token": "token-de-teste"},
+    )
+
+    assert response.status_code == 200
+    assert response.get_json()["sucesso"] is True
+    assert chamadas == [(999, "Transportadora Teste")]
