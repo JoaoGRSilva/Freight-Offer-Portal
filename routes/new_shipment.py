@@ -39,14 +39,12 @@ from services.freight_repository import (
     confirmar_sap,
     listar_propostas,
     obter_fechamento,
-    obter_estado_frete,
     iniciar_negociacao,
     inicializar_banco,
     publicar_oferta,
     retirar_oferta,
     atualizar_dados_carga,
     concluir_frete,
-    obter_frete,
     listar_fretes_preparacao,
     delete_base
 )

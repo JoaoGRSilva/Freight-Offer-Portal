@@ -1,6 +1,5 @@
 import os
 from dotenv import load_dotenv
-load_dotenv()
 from flask import Flask, request, redirect, url_for, jsonify, abort
 from flask_login import LoginManager, current_user
 from routes.freight_offers import home_bp
@@ -15,6 +14,7 @@ from services.user_repository import initialize_users, get_user
 from services.plant_repository import seed_plants_from_config
 from services.access_control import require_freight_access
 
+load_dotenv()
 inicializar_banco()
 initialize_users()
 seed_plants_from_config()  # só popula se a tabela `plants` estiver vazia
@@ -51,6 +51,7 @@ def protect_routes():
                 or request.accept_mimetypes.best == 'application/json'):
             return jsonify(sucesso=False, ok=False, mensagem=msg, erro=msg), 400
         abort(400, description=msg)
+    
     if endpoint == 'auth.logout':
         return
     if current_user.role == 'carrier':
@@ -73,7 +74,10 @@ def protect_routes():
     if request.blueprint in ('dashboard','admin') and not current_user.is_admin:
         abort(403)
     if endpoint == 'home.enviar_proposta':
-        abort(403) # legacy simulation disabled until authenticated carrier workflow
+        abort(403)
+    if endpoint == 'nova-carga.limpar' and not current_user.is_admin:
+        abort(403)
+
     if 'frete_id' in (request.view_args or {}):
         require_freight_access(request.view_args['frete_id'])
 
