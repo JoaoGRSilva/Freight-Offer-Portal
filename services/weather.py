@@ -1,12 +1,11 @@
-key = "839e0384cc5648d486c124040262910"
-
 import requests
 import json
+import os
 from typing import Dict, Optional
 
 class WeatherAPI:
     def __init__(self, api_key: str):
-        self.api_key = api_key
+        self.api_key = os.environ('WEATHER_KEY')
         self.base_url = "https://api.weatherapi.com/v1"
         
     def _make_request(self, endpoint: str, params: Dict) -> Optional[Dict]:
