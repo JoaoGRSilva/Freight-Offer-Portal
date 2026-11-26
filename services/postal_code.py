@@ -22,7 +22,6 @@ NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
 BRASILAPI_URL = "https://brasilapi.com.br/api/cep/v2/{}"
 OSRM_URL = "https://router.project-osrm.org/route/v1/driving/{}"
 HEADERS = {"User-Agent": "FreightPortal/1.0 (internal prototype; contact: joaog.silva@dsm-firmenich.com)"}
-# Configure um contato real e autorizado no User-Agent antes de uso intensivo.
 _NOMINATIM_LOCK = threading.Lock()
 _ULTIMA_CONSULTA_NOMINATIM = 0.0
 _NOMINATIM_BLOQUEADO_ATE = 0.0  # Pausa após HTTP 403/429

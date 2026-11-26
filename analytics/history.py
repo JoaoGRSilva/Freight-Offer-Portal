@@ -210,6 +210,7 @@ def carregar_historico():
 
     df["cep"] = (
         df["cep"]
+        .fillna("")
         .astype(str)
         .str.replace(
             r"\D",

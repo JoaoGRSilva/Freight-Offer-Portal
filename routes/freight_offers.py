@@ -121,7 +121,15 @@ def enviar_proposta(frete_id):
         }), 400
 
     try:
-        prazo_dias = int(dados.get("prazo_dias"))
+        prazo_original = dados.get("prazo_dias")
+
+        if isinstance(prazo_original, bool):
+            raise ValueError()
+
+        if isinstance(prazo_original, float) and not prazo_original.is_integer():
+            raise ValueError()
+
+        prazo_dias = int(prazo_original)
 
         if not 1 <= prazo_dias <= 365:
             raise ValueError()

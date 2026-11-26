@@ -1571,3 +1571,5 @@ classificar_confianca = classify_confidence
 recarregar_historico = reload_history
 cep_para_uf = zip_to_state
 _historico = _trip_history  # kept for diagnostic scripts
+
+
